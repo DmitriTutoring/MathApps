@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prostopadłościan – objętość</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #f5f0e8;
+      color: #2c2c2c;
+      overflow: hidden;
+    }
+    .app {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .header {
+      flex-shrink: 0;
+      padding: 20px 24px 16px;
+      background: #e8e0d4;
+      border-bottom: 1px solid #d5cdc0;
+      position: relative;
+    }
+    .title {
+      margin: 0 0 14px;
+      font-weight: 600;
+      font-size: 20px;
+      color: #111;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+      row-gap: 10px;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    label {
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    input[type="text"] {
+      width: 60px;
+      padding: 6px 8px;
+      border: 1px solid #d5cdc0;
+      border-radius: 6px;
+      font-size: 14px;
+      text-align: center;
+      background: #fdfcf9;
+    }
+    input[type="range"] {
+      width: 120px;
+      accent-color: #4a90d9;
+      cursor: pointer;
+    }
+    .volume-display {
+      font-size: 36px;
+      font-weight: 700;
+      color: #111;
+      text-align: center;
+      margin-left: auto;
+    }
+    .hint {
+      font-size: 13px;
+      color: #999;
+      margin-top: 10px;
+    }
+    .canvas-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f5f0e8;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #111;
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid #b0a89e;
+      border-radius: 6px;
+      background: #fdfcf9;
+      transition: background 0.2s;
+    }
+    .back-btn:hover {
+      background: #d5cdc0;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h2 class="title">Prostopadłościan – objętość</h2>
+    <a href="../index.html" class="back-btn">← Powrót do menu</a>
+    <div class="controls">
+      <div class="control-group">
+        <label>Szerokość:
+          <input id="w" type="text" value="1">
+        </label>
+        <input id="ws" type="range" min="0" max="10" step="0.1" value="1">
+      </div>
+      <div class="control-group">
+        <label>Wysokość:
+          <input id="h" type="text" value="1">
+        </label>
+        <input id="hs" type="range" min="0" max="10" step="0.1" value="1">
+      </div>
+      <div class="control-group">
+        <label>Głębokość:
+          <input id="d" type="text" value="1">
+        </label>
+        <input id="ds" type="range" min="0" max="10" step="0.1" value="1">
+      </div>
+      <div class="volume-display" id="volumeDisplay">Objętość: 1</div>
+    </div>
+    <div class="hint">Użyj myszy do obracania i przybliżania. Kółko myszy – zoom.</div>
+  </div>
+
+  <div class="canvas-wrap" id="canvasContainer"></div>
+</div>
+
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/"
+    }
+  }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// DOM elements
+const wInput = document.getElementById('w');
+const hInput = document.getElementById('h');
+const dInput = document.getElementById('d');
+const wsSlider = document.getElementById('ws');
+const hsSlider = document.getElementById('hs');
+const dsSlider = document.getElementById('ds');
+const volumeDisplay = document.getElementById('volumeDisplay');
+const container = document.getElementById('canvasContainer');
+
+// --- Setup Three.js ---
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#f5f0e8');
+
+const camera = new THREE.PerspectiveCamera(
+  45,
+  container.clientWidth / container.clientHeight,
+  0.1,
+  100
+);
+camera.position.set(8, 5, 10);
+camera.lookAt(0, 1, 0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(container.clientWidth, container.clientHeight);
+container.appendChild(renderer.domElement);
+
+// --- Lighting ---
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambientLight);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+directionalLight.position.set(5, 10, 7);
+scene.add(directionalLight);
+
+// --- Controls ---
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.1;
+controls.target.set(0, 1, 0);
+controls.update();
+
+// --- Ground grid (dynamic size) ---
+let groundGrid = new THREE.GridHelper(12, 12, '#bbb', '#ddd');
+groundGrid.position.y = 0;
+scene.add(groundGrid);
+
+// --- Box ---
+const boxMaterial = new THREE.MeshStandardMaterial({
+  color: '#4a90d9',
+  roughness: 0.3,
+  metalness: 0.1,
+  transparent: true,
+  opacity: 0.6,
+  side: THREE.DoubleSide
+});
+const unitBoxGeometry = new THREE.BoxGeometry(1, 1, 1);
+const boxMesh = new THREE.Mesh(unitBoxGeometry, boxMaterial);
+scene.add(boxMesh);
+
+// --- Black outline (edges of the prism) ---
+const edgeGeometry = new THREE.EdgesGeometry(unitBoxGeometry);
+const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
+const edgeLines = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+boxMesh.add(edgeLines);
+
+// --- Interior grid group ---
+const interiorGridGroup = new THREE.Group();
+scene.add(interiorGridGroup);
+
+// --- Helpers ---
+function createLine(x1, y1, z1, x2, y2, z2, color = '#000') {
+  const geometry = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(x1, y1, z1),
+    new THREE.Vector3(x2, y2, z2)
+  ]);
+  const material = new THREE.LineBasicMaterial({ color });
+  return new THREE.Line(geometry, material);
+}
+
+const HOVER_OFFSET = 0.24;
+
+// --- State variables ---
+let lastW = 1;
+let lastH = 1;
+let lastD = 1;
+
+// --- Update functions ---
+function updateInteriorGrid(w, h, d) {
+  // Remove old grid lines
+  while(interiorGridGroup.children.length > 0) {
+    interiorGridGroup.remove(interiorGridGroup.children[0]);
+  }
+
+  // If any dimension is 0, there's nothing to draw
+  if (w <= 0 || h <= 0 || d <= 0) return;
+
+  // Generate positions in local coordinates centered at origin
+  const halfW = w / 2;
+  const halfD = d / 2;
+
+  const xPositions = [];
+  for (let i = 0; i <= Math.floor(w); i++) xPositions.push(i - halfW);
+  if (w !== Math.floor(w)) xPositions.push(halfW);
+
+  const zPositions = [];
+  for (let i = 0; i <= Math.floor(d); i++) zPositions.push(i - halfD);
+  if (d !== Math.floor(d)) zPositions.push(halfD);
+
+  const yPositions = [];
+  for (let i = 0; i <= Math.floor(h); i++) yPositions.push(HOVER_OFFSET + i);
+  if (h !== Math.floor(h)) yPositions.push(HOVER_OFFSET + h);
+
+  // Vertical lines (parallel to Y)
+  for (const x of xPositions) {
+    for (const z of zPositions) {
+      const line = createLine(x, HOVER_OFFSET, z, x, HOVER_OFFSET + h, z);
+      interiorGridGroup.add(line);
+    }
+  }
+
+  // Lines parallel to Z
+  for (const x of xPositions) {
+    for (const y of yPositions) {
+      const line = createLine(x, y, -halfD, x, y, halfD);
+      interiorGridGroup.add(line);
+    }
+  }
+
+  // Lines parallel to X
+  for (const y of yPositions) {
+    for (const z of zPositions) {
+      const line = createLine(-halfW, y, z, halfW, y, z);
+      interiorGridGroup.add(line);
+    }
+  }
+}
+
+function updateGroundGrid(maxDim) {
+  scene.remove(groundGrid);
+  const size = Math.max(maxDim, 4) + 2;
+  groundGrid = new THREE.GridHelper(size, Math.ceil(size), '#bbb', '#ddd');
+  groundGrid.position.y = 0;
+  scene.add(groundGrid);
+}
+
+function updatePrism() {
+  // Position the box: centered on XZ plane, bottom at HOVER_OFFSET
+  boxMesh.scale.set(lastW, lastH, lastD);
+  boxMesh.position.set(0, HOVER_OFFSET + lastH / 2, 0);
+
+  // If any dimension is 0, hide the box
+  if (lastW <= 0 || lastH <= 0 || lastD <= 0) {
+    boxMesh.visible = false;
+  } else {
+    boxMesh.visible = true;
+  }
+
+  // Volume display
+  const volume = lastW * lastH * lastD;
+  volumeDisplay.textContent = `Objętość: ${parseFloat(volume.toFixed(2))}`;
+
+  // Interior grid
+  updateInteriorGrid(lastW, lastH, lastD);
+
+  // Ground grid size
+  updateGroundGrid(Math.max(lastW, lastD));
+}
+
+// --- Input handling ---
+function onSliderChange() {
+  lastW = parseFloat(wsSlider.value);
+  lastH = parseFloat(hsSlider.value);
+  lastD = parseFloat(dsSlider.value);
+  wInput.value = lastW;
+  hInput.value = lastH;
+  dInput.value = lastD;
+  updatePrism();
+}
+
+wsSlider.addEventListener('input', onSliderChange);
+hsSlider.addEventListener('input', onSliderChange);
+dsSlider.addEventListener('input', onSliderChange);
+
+// Text inputs: update only on change (Enter or blur)
+wInput.addEventListener('change', () => {
+  const val = parseFloat(wInput.value);
+  if (!isNaN(val)) {
+    lastW = Math.max(0, Math.min(10, val));
+    wsSlider.value = lastW;
+    wInput.value = lastW;
+    updatePrism();
+  } else {
+    wInput.value = lastW;
+  }
+});
+
+hInput.addEventListener('change', () => {
+  const val = parseFloat(hInput.value);
+  if (!isNaN(val)) {
+    lastH = Math.max(0, Math.min(10, val));
+    hsSlider.value = lastH;
+    hInput.value = lastH;
+    updatePrism();
+  } else {
+    hInput.value = lastH;
+  }
+});
+
+dInput.addEventListener('change', () => {
+  const val = parseFloat(dInput.value);
+  if (!isNaN(val)) {
+    lastD = Math.max(0, Math.min(10, val));
+    dsSlider.value = lastD;
+    dInput.value = lastD;
+    updatePrism();
+  } else {
+    dInput.value = lastD;
+  }
+});
+
+// --- Resize handler ---
+window.addEventListener('resize', () => {
+  camera.aspect = container.clientWidth / container.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(container.clientWidth, container.clientHeight);
+});
+
+// --- Animation loop ---
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+// Initial update
+updatePrism();
+animate();
+</script>
+</body>
+</html>
