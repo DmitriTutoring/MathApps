@@ -255,11 +255,11 @@ function draw() {
         const largeArc = angleStep > Math.PI ? 1 : 0;
         const fill = i < numerator ? fillColor : unfilledColor;
 
-        s += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2} Z" fill="${fill}" stroke="black" stroke-width="1.2"/>`;
+        s += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2} Z" fill="${fill}" stroke="#777" stroke-width="1.2"/>`;
       }
 
       // 2. Circle outline on top
-      s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#999" stroke-width="2"/>`;
+      s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="black" stroke-width="2"/>`;
     }
 
   } else if (mode === 'bar') {
@@ -285,7 +285,7 @@ function draw() {
 
     for (let i = 1; i < denominator; i++) {
       const x = barX + i * UNIT;
-      s += `<line x1="${x}" y1="${barY}" x2="${x}" y2="${barY + BAR_H}" stroke="#999" stroke-width="0.8"/>`;
+      s += `<line x1="${x}" y1="${barY}" x2="${x}" y2="${barY + BAR_H}" stroke="black" stroke-width="0.8"/>`;
     }
   }
 
