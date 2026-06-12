@@ -255,7 +255,7 @@ function draw() {
         const largeArc = angleStep > Math.PI ? 1 : 0;
         const fill = i < numerator ? fillColor : unfilledColor;
 
-        s += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2} Z" fill="${fill}" stroke="#777" stroke-width="1.2"/>`;
+        s += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2} Z" fill="${fill}" stroke="black" stroke-width="0.8"/>`;
       }
 
       // 2. Circle outline on top
