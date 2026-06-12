@@ -67,6 +67,16 @@
       accent-color: #4a90d9;
       cursor: pointer;
     }
+    input[type="range"]::-webkit-slider-runnable-track {
+      background: #d5cdc0;
+      height: 6px;
+      border-radius: 3px;
+    }
+    input[type="range"]::-moz-range-track {
+      background: #d5cdc0;
+      height: 6px;
+      border-radius: 3px;
+    }
     select {
       padding: 6px 8px;
       border: 1px solid #d5cdc0;
@@ -74,6 +84,15 @@
       font-size: 14px;
       background: #fdfcf9;
       cursor: pointer;
+    }
+    input[type="color"] {
+      width: 36px;
+      height: 30px;
+      border: 1px solid #d5cdc0;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #fdfcf9;
+      padding: 2px;
     }
     .hint {
       font-size: 13px;
@@ -163,6 +182,11 @@
           </select>
         </label>
       </div>
+      <div class="control-group">
+        <label>Kolor:
+          <input id="colorPicker" type="color" value="#4a90d9">
+        </label>
+      </div>
     </div>
     <div class="hint">Prostokąt i siatka jednostkowa dopasowują się do okna. Użyj kółka myszy do powiększania.</div>
   </div>
@@ -184,6 +208,7 @@ const h = document.getElementById('h');
 const ws = document.getElementById('ws');
 const hs = document.getElementById('hs');
 const shapeSelect = document.getElementById('shapeSelect');
+const colorPicker = document.getElementById('colorPicker');
 const areaDisplay = document.getElementById('areaDisplay');
 const svg = document.getElementById('svg');
 const svgContainer = document.getElementById('svgContainer');
@@ -201,10 +226,19 @@ function fmt(n) {
   return parseFloat(n.toFixed(4)).toString();
 }
 
+function hexToRgba(hex, alpha) {
+  hex = hex.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 function draw() {
   const width = num(w.value);
   const height = num(h.value);
   const shape = shapeSelect.value;
+  const fillColor = hexToRgba(colorPicker.value, 0.35);
 
   let area;
   if (shape === 'triangle') {
@@ -233,7 +267,6 @@ function draw() {
 
   let s = '';
 
-  // 1. Grid lines – dark grey, behind everything
   for (let x = 0; x <= cols; x++) {
     s += `<line x1="${ox + x * UNIT}" y1="${oy}" x2="${ox + x * UNIT}" y2="${oy + rows * UNIT}" stroke="#666" stroke-width="0.5"/>`;
   }
@@ -241,24 +274,22 @@ function draw() {
     s += `<line x1="${ox}" y1="${oy + y * UNIT}" x2="${ox + cols * UNIT}" y2="${oy + y * UNIT}" stroke="#666" stroke-width="0.5"/>`;
   }
 
-  // 2. Rectangle outline – always shown
   s += `<rect x="${ox}" y="${oy}" width="${width * UNIT}" height="${height * UNIT}" fill="none" stroke="black" stroke-width="2"/>`;
 
-  // 3. Filled area
   if (shape === 'rectangle') {
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
         const vw = Math.max(0, Math.min(1, width - x));
         const vh = Math.max(0, Math.min(1, height - y));
         if (vw <= 0 || vh <= 0) continue;
-        s += `<rect x="${ox + x * UNIT}" y="${oy + y * UNIT}" width="${vw * UNIT}" height="${vh * UNIT}" fill="rgba(74, 144, 217, 0.35)"/>`;
+        s += `<rect x="${ox + x * UNIT}" y="${oy + y * UNIT}" width="${vw * UNIT}" height="${vh * UNIT}" fill="${fillColor}"/>`;
       }
     }
   } else if (shape === 'triangle') {
     const p1 = `${ox},${oy}`;
     const p2 = `${ox + width * UNIT},${oy}`;
     const p3 = `${ox},${oy + height * UNIT}`;
-    s += `<polygon points="${p1} ${p2} ${p3}" fill="rgba(74, 144, 217, 0.35)" stroke="black" stroke-width="2"/>`;
+    s += `<polygon points="${p1} ${p2} ${p3}" fill="${fillColor}" stroke="black" stroke-width="2"/>`;
   }
 
   svg.innerHTML = s;
@@ -276,6 +307,7 @@ h.oninput = () => draw();
 ws.oninput = () => { w.value = ws.value; draw(); };
 hs.oninput = () => { h.value = hs.value; draw(); };
 shapeSelect.onchange = () => draw();
+colorPicker.oninput = () => draw();
 
 draw();
 </script>
