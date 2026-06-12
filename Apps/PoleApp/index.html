@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pole figury</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+
+  :root {
+    --bg: #f5f0e8; --bg2: #ebe5d9; --bg-card: #ffffff;
+    --border: #e0d8cc; --text: #2c2c2c; --text-muted: #999; --text-sub: #777;
+    --input-bg: #fdfcf9; --input-border: #d5cdc0; --hover-bg: #e4ddd1;
+    --accent: #7a6a55; --divider: #ddd;
+    --shadow: 0 2px 10px rgba(0,0,0,0.05); --shadow-hover: 0 8px 24px rgba(0,0,0,0.10);
+  }
+  [data-theme="dark"] {
+    --bg: #1c1b18; --bg2: #242320; --bg-card: #242320;
+    --border: #38362f; --text: #e8e2d8; --text-muted: #6a6455; --text-sub: #8a8070;
+    --input-bg: #2a2825; --input-border: #45433a; --hover-bg: #2e2c28;
+    --accent: #a08c70; --divider: #38362f;
+    --shadow: 0 2px 10px rgba(0,0,0,0.3); --shadow-hover: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 22px; background: var(--bg2); border-bottom: 1px solid var(--border);
+    flex-shrink: 0; transition: background 0.2s, border-color 0.2s;
+  }
+  .topbar-title { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: 0.01em; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .back-btn {
+    font-size: 13px; font-weight: 500; color: var(--text-muted); text-decoration: none;
+    padding: 5px 11px; border: 1px solid var(--input-border); border-radius: 6px;
+    background: transparent; white-space: nowrap; transition: background 0.15s, color 0.15s;
+  }
+  .back-btn:hover { background: var(--hover-bg); color: var(--text); }
+  .theme-toggle { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
+  .theme-toggle input[type="checkbox"] { display: none; }
+  .toggle-track {
+    width: 34px; height: 18px; background: var(--divider); border-radius: 9px;
+    position: relative; transition: background 0.2s; flex-shrink: 0;
+  }
+  .theme-toggle input:checked + .toggle-track { background: var(--accent); }
+  .toggle-thumb {
+    width: 14px; height: 14px; background: white; border-radius: 50%;
+    position: absolute; top: 2px; left: 2px; transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .theme-toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); }
+  .toggle-icon { font-size: 13px; line-height: 1; }
+  .controls-bar {
+    flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 16px; padding: 10px 20px 13px; background: var(--bg2); border-top: 1px solid var(--border);
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .control-group { display: flex; align-items: center; gap: 7px; }
+  .ctrl-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+  .bar-divider { width: 1px; height: 24px; background: var(--divider); }
+  input[type="text"] {
+    width: 52px; padding: 5px 6px; border: 1px solid var(--input-border); border-radius: 6px;
+    font-size: 13px; font-family: 'Inter', sans-serif; text-align: center;
+    background: var(--input-bg); color: var(--text); outline: none;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  input[type="range"] { accent-color: var(--accent); cursor: pointer; width: 110px; }
+  select {
+    padding: 5px 8px; border: 1px solid var(--input-border); border-radius: 6px;
+    font-size: 13px; font-family: 'Inter', sans-serif;
+    background: var(--input-bg); color: var(--text); cursor: pointer; outline: none;
+    transition: background 0.2s, color 0.2s;
+  }
+  input[type="color"] {
+    width: 30px; height: 26px; border: 1px solid var(--input-border);
+    border-radius: 6px; cursor: pointer; background: var(--input-bg); padding: 2px;
+  }
+  .card-grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 30px 22px; text-align: center; text-decoration: none; color: var(--text);
+    display: block; box-shadow: var(--shadow);
+    transition: box-shadow 0.2s, transform 0.2s, background 0.2s, border-color 0.2s;
+  }
+  .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+  .card-icon { font-size: 42px; margin-bottom: 12px; }
+  .card-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .card-desc { font-size: 13px; color: var(--text-sub); line-height: 1.5; }
+
+    body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    .canvas-wrap {
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 10px; padding: 12px 12px 8px;
+    }
+    .area-display { flex-shrink: 0; font-size: 44px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; text-align: center; line-height: 1; }
+    .area-display .area-sub { font-size: 16px; font-weight: 400; color: var(--text-muted); margin-left: 6px; }
+    .svg-container { flex: 1; min-height: 0; width: 100%; display: flex; justify-content: center; align-items: center; overflow: auto; cursor: grab; }
+    .svg-container:active { cursor: grabbing; }
+    svg { display: block; background: transparent; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="topbar-title">Pole figury</span>
+    <div class="topbar-right">
+      <label class="theme-toggle" title="Tryb ciemny / jasny">
+      <input type="checkbox" id="themeToggle">
+      <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      <span class="toggle-icon">🌙</span>
+    </label>
+      <a href="../index.html" class="back-btn">← Powrót</a>
+    </div>
+  </div>
+  <div class="canvas-wrap">
+    <div class="area-display" id="areaDisplay">Pole: <span id="areaVal">15</span><span class="area-sub">jednostek²</span></div>
+    <div class="svg-container" id="svgContainer"><svg id="svg"></svg></div>
+  </div>
+  <div class="controls-bar">
+    <div class="control-group">
+      <span class="ctrl-label">Długość</span>
+      <input id="w" type="text" value="5">
+      <input id="ws" type="range" min="0" max="20" step="1" value="5">
+    </div>
+    <div class="bar-divider"></div>
+    <div class="control-group">
+      <span class="ctrl-label">Wysokość</span>
+      <input id="h" type="text" value="3">
+      <input id="hs" type="range" min="0" max="20" step="1" value="3">
+    </div>
+    <div class="bar-divider"></div>
+    <div class="control-group">
+      <span class="ctrl-label">Kształt</span>
+      <select id="shapeSelect">
+        <option value="rectangle" selected>Prostokąt</option>
+        <option value="triangle">Trójkąt</option>
+      </select>
+    </div>
+    <div class="control-group">
+      <span class="ctrl-label">Kolor</span>
+      <input id="colorPicker" type="color" value="#4a90d9">
+    </div>
+  </div>
+  <script>
+  (function() {
+    const toggle = document.getElementById('themeToggle');
+    const root = document.documentElement;
+    if (localStorage.getItem('theme') === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+      if (toggle) toggle.checked = true;
+    }
+    if (toggle) {
+      toggle.addEventListener('change', () => {
+        if (toggle.checked) {
+          root.setAttribute('data-theme', 'dark');
+          localStorage.setItem('theme', 'dark');
+        } else {
+          root.removeAttribute('data-theme');
+          localStorage.setItem('theme', 'light');
+        }
+        window.dispatchEvent(new Event('themechange'));
+      });
+    }
+  })();
+</script>
+  <script>
+  const UNIT = 40, PADDING = 2 * UNIT;
+  const w = document.getElementById('w'), h = document.getElementById('h');
+  const ws = document.getElementById('ws'), hs = document.getElementById('hs');
+  const shapeSelect = document.getElementById('shapeSelect');
+  const colorPicker = document.getElementById('colorPicker');
+  const areaVal = document.getElementById('areaVal');
+  const svg = document.getElementById('svg');
+  const svgContainer = document.getElementById('svgContainer');
+  let zoom = 1.0;
+
+  function num(v) { return Math.max(0, Math.min(20, parseFloat(v) || 0)); }
+  function fmt(n) { return parseFloat(n.toFixed(4)).toString(); }
+  function hexToRgba(hex, alpha) {
+    hex = hex.replace('#','');
+    const r=parseInt(hex.substring(0,2),16),g=parseInt(hex.substring(2,4),16),b=parseInt(hex.substring(4,6),16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  function draw() {
+    const width=num(w.value), height=num(h.value), shape=shapeSelect.value;
+    const fillColor=hexToRgba(colorPicker.value,0.35);
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const gridStroke = dark ? '#555' : '#666';
+    const shapeStroke = dark ? '#ccc' : 'black';
+    const area = shape==='triangle' ? (width*height)/2 : width*height;
+    areaVal.textContent = fmt(area);
+    const cols=Math.max(1,Math.ceil(width)), rows=Math.max(1,Math.ceil(height));
+    const bW=cols*UNIT+2*PADDING, bH=rows*UNIT+2*PADDING;
+    svg.setAttribute('viewBox',`0 0 ${bW} ${bH}`);
+    svg.setAttribute('width', bW*zoom); svg.setAttribute('height', bH*zoom);
+    const ox=PADDING, oy=PADDING; let s='';
+    for (let x=0;x<=cols;x++) s+=`<line x1="${ox+x*UNIT}" y1="${oy}" x2="${ox+x*UNIT}" y2="${oy+rows*UNIT}" stroke="${gridStroke}" stroke-width="0.5"/>`;
+    for (let y=0;y<=rows;y++) s+=`<line x1="${ox}" y1="${oy+y*UNIT}" x2="${ox+cols*UNIT}" y2="${oy+y*UNIT}" stroke="${gridStroke}" stroke-width="0.5"/>`;
+    s+=`<rect x="${ox}" y="${oy}" width="${width*UNIT}" height="${height*UNIT}" fill="none" stroke="${shapeStroke}" stroke-width="2"/>`;
+    if (shape==='rectangle') {
+      for (let y=0;y<rows;y++) for (let x=0;x<cols;x++) {
+        const vw=Math.max(0,Math.min(1,width-x)), vh=Math.max(0,Math.min(1,height-y));
+        if (vw>0&&vh>0) s+=`<rect x="${ox+x*UNIT}" y="${oy+y*UNIT}" width="${vw*UNIT}" height="${vh*UNIT}" fill="${fillColor}"/>`;
+      }
+    } else {
+      s+=`<polygon points="${ox},${oy} ${ox+width*UNIT},${oy} ${ox},${oy+height*UNIT}" fill="${fillColor}" stroke="${shapeStroke}" stroke-width="2"/>`;
+    }
+    svg.innerHTML = s;
+  }
+
+  svgContainer.addEventListener('wheel',(e)=>{e.preventDefault();zoom=Math.max(0.5,Math.min(4,zoom+(e.deltaY>0?-0.1:0.1)));draw();},{passive:false});
+  w.oninput=()=>draw(); h.oninput=()=>draw();
+  ws.oninput=()=>{w.value=ws.value;draw();}; hs.oninput=()=>{h.value=hs.value;draw();};
+  shapeSelect.onchange=()=>draw(); colorPicker.oninput=()=>draw();
+  window.addEventListener('themechange', draw);
+  draw();
+  </script>
+</body>
+</html>
