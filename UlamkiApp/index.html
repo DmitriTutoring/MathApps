@@ -67,6 +67,16 @@
       accent-color: #4a90d9;
       cursor: pointer;
     }
+    input[type="range"]::-webkit-slider-runnable-track {
+      background: #d5cdc0;
+      height: 6px;
+      border-radius: 3px;
+    }
+    input[type="range"]::-moz-range-track {
+      background: #d5cdc0;
+      height: 6px;
+      border-radius: 3px;
+    }
     select {
       padding: 6px 10px;
       border: 1px solid #d5cdc0;
@@ -74,6 +84,15 @@
       font-size: 14px;
       background: #fdfcf9;
       cursor: pointer;
+    }
+    input[type="color"] {
+      width: 36px;
+      height: 30px;
+      border: 1px solid #d5cdc0;
+      border-radius: 6px;
+      cursor: pointer;
+      background: #fdfcf9;
+      padding: 2px;
     }
     .fraction-display {
       font-size: 36px;
@@ -154,6 +173,11 @@
           </select>
         </label>
       </div>
+      <div class="control-group">
+        <label>Kolor:
+          <input id="colorPicker" type="color" value="#4a90d9">
+        </label>
+      </div>
       <div class="fraction-display">
         <span id="fractionText">3/4</span>
         <span class="decimal-display"> = <span id="decimalText">0.75</span></span>
@@ -173,12 +197,21 @@ const denInput = document.getElementById('den');
 const numSlider = document.getElementById('nums');
 const denSlider = document.getElementById('dens');
 const modeSelect = document.getElementById('modeSelect');
+const colorPicker = document.getElementById('colorPicker');
 const fractionText = document.getElementById('fractionText');
 const decimalText = document.getElementById('decimalText');
 const svg = document.getElementById('svg');
 
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
+}
+
+function hexToRgba(hex, alpha) {
+  hex = hex.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function draw() {
@@ -198,6 +231,7 @@ function draw() {
   decimalText.textContent = (numerator / denominator).toFixed(4).replace(/\.?0+$/, '');
 
   const mode = modeSelect.value;
+  const fillColor = hexToRgba(colorPicker.value, 0.35);
 
   const PAD = 40;
   let s = '';
@@ -227,7 +261,7 @@ function draw() {
 
         const largeArc = angleStep > Math.PI ? 1 : 0;
         const fill = i < numerator
-          ? 'rgba(74, 144, 217, 0.35)'
+          ? fillColor
           : 'rgba(200, 200, 200, 0.08)';
 
         s += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2} Z" fill="${fill}" stroke="#888" stroke-width="0.8"/>`;
@@ -253,7 +287,7 @@ function draw() {
     s += `<rect x="${barX}" y="${barY}" width="${denominator * UNIT}" height="${BAR_H}" rx="6" ry="6" fill="none" stroke="black" stroke-width="2"/>`;
 
     if (numerator > 0) {
-      s += `<rect x="${barX}" y="${barY}" width="${numerator * UNIT}" height="${BAR_H}" rx="6" ry="6" fill="rgba(74, 144, 217, 0.35)"/>`;
+      s += `<rect x="${barX}" y="${barY}" width="${numerator * UNIT}" height="${BAR_H}" rx="6" ry="6" fill="${fillColor}"/>`;
       s += `<rect x="${barX}" y="${barY}" width="${denominator * UNIT}" height="${BAR_H}" rx="6" ry="6" fill="none" stroke="black" stroke-width="2"/>`;
     }
 
@@ -311,6 +345,7 @@ denSlider.oninput = () => {
 };
 
 modeSelect.onchange = () => draw();
+colorPicker.oninput = () => draw();
 
 draw();
 </script>
