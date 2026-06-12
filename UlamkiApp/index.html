@@ -11,7 +11,7 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
-      background: #f5f0e8;
+      background: #f5f0e8;  /* warm pastel */
       color: #2c2c2c;
       overflow: hidden;
     }
@@ -24,8 +24,8 @@
     .header {
       flex-shrink: 0;
       padding: 20px 24px 16px;
-      background: #fdfcf9;
-      border-bottom: 1px solid #e8e2d8;
+      background: #f5f0e8;          /* same as body – no white card */
+      border-bottom: 1px solid #e0d6c8; /* subtle soft line */
     }
     .title {
       margin: 0 0 14px;
@@ -59,7 +59,7 @@
       border-radius: 6px;
       font-size: 14px;
       text-align: center;
-      background: white;
+      background: #fdfcf9;  /* slightly lighter for input readability, but still soft */
     }
     input[type="range"] {
       width: 120px;
@@ -71,7 +71,7 @@
       border: 1px solid #d5cdc0;
       border-radius: 6px;
       font-size: 14px;
-      background: white;
+      background: #fdfcf9;
       cursor: pointer;
     }
     .fraction-display {
@@ -98,16 +98,15 @@
       justify-content: center;
       align-items: center;
       padding: 16px;
-      background: #f5f0e8;
+      background: #f5f0e8;   /* same pastel as body */
       overflow: auto;
     }
     svg {
       display: block;
       max-width: 100%;
       max-height: 100%;
-      background: #fdfcf9;
-      border-radius: 12px;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      background: #f5f0e8;          /* no white card, same pastel as everything */
+      /* removed box-shadow and border-radius for a seamless look */
     }
   </style>
 </head>
@@ -243,9 +242,7 @@ function draw() {
     // Filled portion
     if (numerator > 0) {
       s += `<rect x="${barX}" y="${barY}" width="${numerator * UNIT}" height="${BAR_H}" rx="6" ry="6" fill="rgba(74, 144, 217, 0.35)"/>`;
-      // Clip the fill to the rounded rectangle so it doesn't spill at corners
-      // Simple approach: just overlay. The outline on top will cover the edges.
-      // Better: use a clipPath. For simplicity, redraw the outline after the fill.
+      // Redraw outline on top to keep borders sharp
       s += `<rect x="${barX}" y="${barY}" width="${denominator * UNIT}" height="${BAR_H}" rx="6" ry="6" fill="none" stroke="black" stroke-width="2"/>`;
     }
 
