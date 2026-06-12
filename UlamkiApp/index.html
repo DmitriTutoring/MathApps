@@ -4,13 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wizualizacja ułamków</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
-      font-family: 'Inter', -apple-system, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -18,259 +15,253 @@
       color: #2c2c2c;
       overflow: hidden;
     }
-
-    /* ── Top bar: just title + back button ── */
-    .topbar {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 24px;
-      background: #f5f0e8;
-      border-bottom: 1px solid #e0d8cc;
-    }
-
-    .title {
-      font-size: 16px;
-      font-weight: 600;
-      color: #555;
-      letter-spacing: 0.01em;
-    }
-
-    .back-btn {
-      font-size: 13px;
-      font-weight: 500;
-      color: #888;
-      text-decoration: none;
-      padding: 5px 12px;
-      border: 1px solid #d5cdc0;
-      border-radius: 6px;
-      background: transparent;
-      transition: background 0.15s, color 0.15s;
-    }
-    .back-btn:hover { background: #e8e0d4; color: #333; }
-
-    /* ── Canvas: takes all available space ── */
-    .canvas-wrap {
+    .app {
       flex: 1;
-      min-height: 0;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-      padding: 16px 16px 8px;
-      overflow: hidden;
-    }
-
-    /* ── Fraction display — big, centered, above the shape ── */
-    .fraction-display {
-      flex-shrink: 0;
-      text-align: center;
-      line-height: 1;
-    }
-    .fraction-main {
-      font-size: 52px;
-      font-weight: 700;
-      color: #111;
-      letter-spacing: -0.02em;
-    }
-    .fraction-decimal {
-      font-size: 22px;
-      font-weight: 400;
-      color: #aaa;
-      margin-left: 8px;
-    }
-
-    svg {
-      display: block;
-      flex: 1;
       min-height: 0;
-      max-width: 100%;
-      max-height: 100%;
     }
-
-    /* ── Controls: subtle strip at the bottom ── */
-    .controls-bar {
+    .header {
       flex-shrink: 0;
+      padding: 20px 24px 16px;
+      background: #e8e0d4;
+      border-bottom: 1px solid #d5cdc0;
+      position: relative;
+    }
+    .title {
+      margin: 0 0 14px;
+      font-weight: 600;
+      font-size: 20px;
+      color: #111;
+    }
+    .controls {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      justify-content: center;
-      gap: 20px;
-      padding: 12px 24px 16px;
-      background: #f5f0e8;
-      border-top: 1px solid #e0d8cc;
+      gap: 14px;
+      row-gap: 10px;
     }
-
     .control-group {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-
-    .ctrl-label {
-      font-size: 12px;
-      font-weight: 500;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
+    label {
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       white-space: nowrap;
     }
-
     input[type="text"] {
-      width: 48px;
-      padding: 5px 6px;
+      width: 60px;
+      padding: 6px 8px;
       border: 1px solid #d5cdc0;
       border-radius: 6px;
       font-size: 14px;
-      font-family: 'Inter', sans-serif;
       text-align: center;
       background: #fdfcf9;
-      color: #111;
-      outline: none;
     }
-    input[type="text"]:focus { border-color: #aaa; }
-
     input[type="range"] {
-      width: 100px;
-      accent-color: #7a6a55;
+      width: 120px;
+      accent-color: #4a90d9;
       cursor: pointer;
     }
-
     select {
-      padding: 5px 8px;
+      padding: 6px 10px;
       border: 1px solid #d5cdc0;
       border-radius: 6px;
-      font-size: 13px;
-      font-family: 'Inter', sans-serif;
+      font-size: 14px;
       background: #fdfcf9;
-      color: #333;
       cursor: pointer;
-      outline: none;
     }
-
     input[type="color"] {
-      width: 32px;
-      height: 28px;
+      width: 36px;
+      height: 30px;
       border: 1px solid #d5cdc0;
       border-radius: 6px;
       cursor: pointer;
       background: #fdfcf9;
       padding: 2px;
     }
-
-    .divider {
-      width: 1px;
-      height: 28px;
-      background: #ddd;
+    .fraction-display {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      margin-left: auto;
+      line-height: 1.2;
+    }
+    .frac-num, .frac-den {
+      font-size: 28px;
+      font-weight: 700;
+      color: #111;
+    }
+    .frac-line {
+      display: block;
+      width: 100%;
+      min-width: 36px;
+      height: 2px;
+      background: #111;
+      margin: 2px 0;
+    }
+    .decimal-display {
+      font-size: 18px;
+      font-weight: 400;
+      color: #777;
+      margin-left: 4px;
+    }
+    .fraction-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .hint {
+      font-size: 13px;
+      color: #999;
+      margin-top: 10px;
+    }
+    .canvas-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      background: #f5f0e8;
+      overflow: auto;
+    }
+    svg {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      background: #f5f0e8;
+    }
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #111;
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid #b0a89e;
+      border-radius: 6px;
+      background: #fdfcf9;
+      transition: background 0.2s;
+    }
+    .back-btn:hover {
+      background: #d5cdc0;
+      color: #000;
     }
   </style>
 </head>
 <body>
-<div style="display:flex;flex-direction:column;height:100vh;">
-
-  <!-- Top bar -->
-  <div class="topbar">
-    <span class="title">Wizualizacja ułamków</span>
+<div class="app">
+  <div class="header">
+    <h2 class="title">Wizualizacja ułamków</h2>
     <a href="../index.html" class="back-btn">← Powrót do menu</a>
+    <div class="controls">
+      <div class="control-group">
+        <label>Licznik:
+          <input id="num" type="text" value="3">
+        </label>
+        <input id="nums" type="range" min="0" max="10" step="1" value="3">
+      </div>
+      <div class="control-group">
+        <label>Mianownik:
+          <input id="den" type="text" value="4">
+        </label>
+        <input id="dens" type="range" min="1" max="20" step="1" value="4">
+      </div>
+      <div class="control-group">
+        <label>Widok:
+          <select id="modeSelect">
+            <option value="pie" selected>Koło</option>
+            <option value="bar">Pasek</option>
+          </select>
+        </label>
+      </div>
+      <div class="control-group">
+        <label>Kolor:
+          <input id="colorPicker" type="color" value="#4a90d9">
+        </label>
+      </div>
+      <div class="fraction-row">
+        <div class="fraction-display">
+          <span id="numDisplay" class="frac-num">3</span>
+          <span class="frac-line"></span>
+          <span id="denDisplay" class="frac-den">4</span>
+        </div>
+        <span class="decimal-display"> = <span id="decimalText">0.75</span></span>
+      </div>
+    </div>
+    <div class="hint">Przeciągaj suwaki lub wpisuj liczby. Licznik nie może być większy niż mianownik.</div>
   </div>
 
-  <!-- Canvas area -->
   <div class="canvas-wrap">
-    <div class="fraction-display">
-      <span class="fraction-main" id="fractionText">3/4</span>
-      <span class="fraction-decimal">= <span id="decimalText">0.75</span></span>
-    </div>
     <svg id="svg"></svg>
   </div>
-
-  <!-- Controls bar -->
-  <div class="controls-bar">
-    <div class="control-group">
-      <span class="ctrl-label">Licznik</span>
-      <input id="num" type="text" value="3">
-      <input id="nums" type="range" min="0" max="10" step="1" value="3">
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="control-group">
-      <span class="ctrl-label">Mianownik</span>
-      <input id="den" type="text" value="4">
-      <input id="dens" type="range" min="1" max="20" step="1" value="4">
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="control-group">
-      <span class="ctrl-label">Widok</span>
-      <select id="modeSelect">
-        <option value="pie" selected>Koło</option>
-        <option value="bar">Pasek</option>
-      </select>
-    </div>
-
-    <div class="control-group">
-      <span class="ctrl-label">Kolor</span>
-      <input id="colorPicker" type="color" value="#4a90d9">
-    </div>
-  </div>
-
 </div>
 
 <script>
-const INNER_RADIUS_FRAC = 0;
-
-const numInput   = document.getElementById('num');
-const denInput   = document.getElementById('den');
-const numSlider  = document.getElementById('nums');
-const denSlider  = document.getElementById('dens');
+const numInput = document.getElementById('num');
+const denInput = document.getElementById('den');
+const numSlider = document.getElementById('nums');
+const denSlider = document.getElementById('dens');
 const modeSelect = document.getElementById('modeSelect');
-const colorPicker= document.getElementById('colorPicker');
-const fractionText = document.getElementById('fractionText');
-const decimalText  = document.getElementById('decimalText');
+const colorPicker = document.getElementById('colorPicker');
+const numDisplay = document.getElementById('numDisplay');
+const denDisplay = document.getElementById('denDisplay');
+const decimalText = document.getElementById('decimalText');
 const svg = document.getElementById('svg');
 
-function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+function clamp(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
 
 function hexToRgba(hex, alpha) {
   hex = hex.replace('#', '');
-  const r = parseInt(hex.substring(0,2),16);
-  const g = parseInt(hex.substring(2,4),16);
-  const b = parseInt(hex.substring(4,6),16);
-  return `rgba(${r},${g},${b},${alpha})`;
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function draw() {
-  let numerator   = parseInt(numInput.value) || 0;
+  let numerator = parseInt(numInput.value) || 0;
   let denominator = parseInt(denInput.value) || 1;
 
   denominator = Math.max(1, Math.min(20, denominator));
-  numerator   = clamp(numerator, 0, denominator);
+  numerator = clamp(numerator, 0, denominator);
 
-  numSlider.max   = denominator;
+  // Sync inputs
+  numSlider.max = denominator;
   numSlider.value = numerator;
-  numInput.value  = numerator;
+  numInput.value = numerator;
   denSlider.value = denominator;
-  denInput.value  = denominator;
+  denInput.value = denominator;
 
-  fractionText.textContent = `${numerator}/${denominator}`;
-  decimalText.textContent  = (numerator / denominator).toFixed(4).replace(/\.?0+$/, '');
+  // Update fraction display
+  numDisplay.textContent = numerator;
+  denDisplay.textContent = denominator;
+  decimalText.textContent = (numerator / denominator).toFixed(4).replace(/\.?0+$/, '');
 
-  const mode          = modeSelect.value;
-  const fillColor     = hexToRgba(colorPicker.value, 0.65);
-  const unfilledColor = 'rgba(200,200,200,0.12)';
+  const mode = modeSelect.value;
+  const fillColor = hexToRgba(colorPicker.value, 0.65);
+  const unfilledColor = 'rgba(200, 200, 200, 0.08)';
+
   const PAD = 40;
   let s = '';
 
   if (mode === 'pie') {
     const vbSize = 440;
-    const cx = vbSize / 2, cy = vbSize / 2, r = 180;
-    const innerR = r * INNER_RADIUS_FRAC;
+    const cx = vbSize / 2;
+    const cy = vbSize / 2;
+    const r = 180;
 
     svg.setAttribute('viewBox', `0 0 ${vbSize} ${vbSize}`);
-    svg.setAttribute('width',  '100%');
+    svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
@@ -279,82 +270,115 @@ function draw() {
 
       for (let i = 0; i < denominator; i++) {
         const startAngle = -Math.PI / 2 + i * angleStep;
-        const endAngle   = startAngle + angleStep;
-        const x1 = cx + r * Math.cos(startAngle), y1 = cy + r * Math.sin(startAngle);
-        const x2 = cx + r * Math.cos(endAngle),   y2 = cy + r * Math.sin(endAngle);
+        const endAngle = startAngle + angleStep;
+
+        const x1 = cx + r * Math.cos(startAngle);
+        const y1 = cy + r * Math.sin(startAngle);
+        const x2 = cx + r * Math.cos(endAngle);
+        const y2 = cy + r * Math.sin(endAngle);
+
         const largeArc = angleStep > Math.PI ? 1 : 0;
         const fill = i < numerator ? fillColor : unfilledColor;
+
         s += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${largeArc},1 ${x2},${y2} Z" fill="${fill}" stroke="none"/>`;
       }
 
+      // Radial dividing lines
       for (let i = 0; i < denominator; i++) {
-        const angle  = -Math.PI / 2 + i * angleStep;
-        const xInner = cx + innerR * Math.cos(angle), yInner = cy + innerR * Math.sin(angle);
-        const xOuter = cx + r * Math.cos(angle),      yOuter = cy + r * Math.sin(angle);
-        s += `<line x1="${xInner}" y1="${yInner}" x2="${xOuter}" y2="${yOuter}" stroke="#00000033" stroke-width="1"/>`;
+        const angle = -Math.PI / 2 + i * angleStep;
+        const xOuter = cx + r * Math.cos(angle);
+        const yOuter = cy + r * Math.sin(angle);
+
+        s += `<line x1="${cx}" y1="${cy}" x2="${xOuter}" y2="${yOuter}" stroke="black" stroke-width="0.9"/>`;
       }
 
-      s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#222" stroke-width="2"/>`;
+      // Outer circle outline
+      s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="black" stroke-width="2"/>`;
     }
 
   } else if (mode === 'bar') {
-    const UNIT = 48, BAR_H = 100;
+    const UNIT = 48;
+    const BAR_H = 100;
     const totalW = denominator * UNIT + 2 * PAD;
     const totalH = BAR_H + 2 * PAD;
 
     svg.setAttribute('viewBox', `0 0 ${totalW} ${totalH}`);
-    svg.setAttribute('width',  '100%');
+    svg.setAttribute('width', '100%');
     svg.setAttribute('height', '100%');
     svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
 
-    const barX = PAD, barY = PAD;
-    s += `<rect x="${barX}" y="${barY}" width="${denominator*UNIT}" height="${BAR_H}" rx="6" ry="6" fill="none" stroke="#222" stroke-width="2"/>`;
+    const barX = PAD;
+    const barY = PAD;
 
+    // Bar outline
+    s += `<rect x="${barX}" y="${barY}" width="${denominator * UNIT}" height="${BAR_H}" rx="6" ry="6" fill="none" stroke="black" stroke-width="2"/>`;
+
+    // Filled portion
     if (numerator > 0) {
-      s += `<rect x="${barX}" y="${barY}" width="${numerator*UNIT}" height="${BAR_H}" rx="6" ry="6" fill="${fillColor}"/>`;
-      s += `<rect x="${barX}" y="${barY}" width="${denominator*UNIT}" height="${BAR_H}" rx="6" ry="6" fill="none" stroke="#222" stroke-width="2"/>`;
+      s += `<rect x="${barX}" y="${barY}" width="${numerator * UNIT}" height="${BAR_H}" rx="6" ry="6" fill="${fillColor}"/>`;
+      // Redraw outline on top
+      s += `<rect x="${barX}" y="${barY}" width="${denominator * UNIT}" height="${BAR_H}" rx="6" ry="6" fill="none" stroke="black" stroke-width="2"/>`;
     }
 
+    // Division lines
     for (let i = 1; i < denominator; i++) {
       const x = barX + i * UNIT;
-      s += `<line x1="${x}" y1="${barY}" x2="${x}" y2="${barY+BAR_H}" stroke="#99999966" stroke-width="0.8"/>`;
+      s += `<line x1="${x}" y1="${barY}" x2="${x}" y2="${barY + BAR_H}" stroke="#999" stroke-width="0.8"/>`;
     }
   }
 
   svg.innerHTML = s;
 }
 
+// --- Event handlers ---
 function onNumChange() {
   let val = parseInt(numInput.value) || 0;
   const den = parseInt(denInput.value) || 1;
   val = clamp(val, 0, den);
-  numInput.value = val; numSlider.value = val;
+  numInput.value = val;
+  numSlider.value = val;
   draw();
 }
+
 function onDenChange() {
   let val = parseInt(denInput.value) || 1;
   val = Math.max(1, Math.min(20, val));
-  denInput.value = val; denSlider.value = val;
+  denInput.value = val;
+  denSlider.value = val;
   let num = parseInt(numInput.value) || 0;
-  if (num > val) { num = val; numInput.value = num; numSlider.value = num; }
+  if (num > val) {
+    num = val;
+    numInput.value = num;
+    numSlider.value = num;
+  }
   numSlider.max = val;
   draw();
 }
 
-numInput.oninput  = onNumChange;
-denInput.oninput  = onDenChange;
-numSlider.oninput = () => { numInput.value = numSlider.value; draw(); };
+numInput.oninput = onNumChange;
+denInput.oninput = onDenChange;
+
+numSlider.oninput = () => {
+  numInput.value = numSlider.value;
+  draw();
+};
 denSlider.oninput = () => {
   const val = parseInt(denSlider.value);
   denInput.value = val;
   let num = parseInt(numInput.value) || 0;
-  if (num > val) { num = val; numInput.value = num; numSlider.value = num; }
+  if (num > val) {
+    num = val;
+    numInput.value = num;
+    numSlider.value = num;
+  }
   numSlider.max = val;
   draw();
 };
-modeSelect.onchange  = () => draw();
-colorPicker.oninput  = () => draw();
 
+modeSelect.onchange = () => draw();
+colorPicker.oninput = () => draw();
+
+// Initial draw
 draw();
 </script>
 </body>
