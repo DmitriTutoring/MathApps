@@ -25,6 +25,7 @@
       flex-shrink: 0;
       padding: 20px 24px 16px;
       border-bottom: 1px solid #e0e0e0;
+      position: relative;
     }
     .title {
       margin: 0 0 12px;
@@ -114,12 +115,30 @@
       background: transparent;
       border: none;
     }
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      font-size: 13px;
+      color: #777;
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fafafa;
+      transition: background 0.2s;
+    }
+    .back-btn:hover {
+      background: #eee;
+      color: #444;
+    }
   </style>
 </head>
 <body>
 <div class="app">
   <div class="header">
     <h2 class="title">Pole figury</h2>
+    <a href="../index.html" class="back-btn">← Powrót do menu</a>
     <div class="controls">
       <div class="control-group">
         <label>Długość:
