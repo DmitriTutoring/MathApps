@@ -121,19 +121,19 @@
         <label>Szerokość:
           <input id="w" type="text" value="1">
         </label>
-        <input id="ws" type="range" min="0" max="10" step="0.1" value="1">
+        <input id="ws" type="range" min="0" max="10" step="1" value="1">
       </div>
       <div class="control-group">
         <label>Wysokość:
           <input id="h" type="text" value="1">
         </label>
-        <input id="hs" type="range" min="0" max="10" step="0.1" value="1">
+        <input id="hs" type="range" min="0" max="10" step="1" value="1">
       </div>
       <div class="control-group">
         <label>Głębokość:
           <input id="d" type="text" value="1">
         </label>
-        <input id="ds" type="range" min="0" max="10" step="0.1" value="1">
+        <input id="ds" type="range" min="0" max="10" step="1" value="1">
       </div>
       <div class="volume-display" id="volumeDisplay">Objętość: 1</div>
     </div>
@@ -209,7 +209,7 @@ const boxMaterial = new THREE.MeshStandardMaterial({
   roughness: 0.3,
   metalness: 0.1,
   transparent: true,
-  opacity: 0.6,
+  opacity: 0.8,             // ← less transparent
   side: THREE.DoubleSide
 });
 const unitBoxGeometry = new THREE.BoxGeometry(1, 1, 1);
@@ -222,18 +222,36 @@ const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x000000 });
 const edgeLines = new THREE.LineSegments(edgeGeometry, edgeMaterial);
 boxMesh.add(edgeLines);
 
-// --- Interior grid group ---
-const interiorGridGroup = new THREE.Group();
-scene.add(interiorGridGroup);
+// --- Surface grid group (thick lines) ---
+const surfaceGridGroup = new THREE.Group();
+scene.add(surfaceGridGroup);
 
 // --- Helpers ---
-function createLine(x1, y1, z1, x2, y2, z2, color = '#000') {
-  const geometry = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(x1, y1, z1),
-    new THREE.Vector3(x2, y2, z2)
-  ]);
-  const material = new THREE.LineBasicMaterial({ color });
-  return new THREE.Line(geometry, material);
+const LINE_THICKNESS = 0.04;   // thickness of the thick grid "lines" (bars)
+
+// Create a thin box representing a thick line from p1 to p2
+function createThickLine(x1, y1, z1, x2, y2, z2, color = '#000') {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const dz = z2 - z1;
+  const length = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
+  const midZ = (z1 + z2) / 2;
+
+  let geometry;
+  if (Math.abs(dy) > 0.001) { // vertical
+    geometry = new THREE.BoxGeometry(LINE_THICKNESS, length, LINE_THICKNESS);
+  } else if (Math.abs(dx) > 0.001) { // horizontal along X
+    geometry = new THREE.BoxGeometry(length, LINE_THICKNESS, LINE_THICKNESS);
+  } else { // horizontal along Z
+    geometry = new THREE.BoxGeometry(LINE_THICKNESS, LINE_THICKNESS, length);
+  }
+
+  const material = new THREE.MeshBasicMaterial({ color });
+  const box = new THREE.Mesh(geometry, material);
+  box.position.set(midX, midY, midZ);
+  return box;
 }
 
 const HOVER_OFFSET = 0.24;
@@ -244,54 +262,71 @@ let lastH = 1;
 let lastD = 1;
 
 // --- Update functions ---
-function updateInteriorGrid(w, h, d) {
-  // Remove old grid lines
-  while(interiorGridGroup.children.length > 0) {
-    interiorGridGroup.remove(interiorGridGroup.children[0]);
+function updateSurfaceGrid(w, h, d) {
+  // Remove old grid
+  while(surfaceGridGroup.children.length > 0) {
+    surfaceGridGroup.remove(surfaceGridGroup.children[0]);
   }
 
-  // If any dimension is 0, there's nothing to draw
+  // If any dimension is 0, nothing to draw
   if (w <= 0 || h <= 0 || d <= 0) return;
 
-  // Generate positions in local coordinates centered at origin
   const halfW = w / 2;
   const halfD = d / 2;
 
-  const xPositions = [];
-  for (let i = 0; i <= Math.floor(w); i++) xPositions.push(i - halfW);
-  if (w !== Math.floor(w)) xPositions.push(halfW);
+  // Always unit step (1)
+  const step = 1;
 
-  const zPositions = [];
-  for (let i = 0; i <= Math.floor(d); i++) zPositions.push(i - halfD);
-  if (d !== Math.floor(d)) zPositions.push(halfD);
+  function generatePositions(total, halfOffset) {
+    const positions = [];
+    for (let i = 0; i <= Math.floor(total); i += step) {
+      positions.push(i - halfOffset);
+    }
+    // Ensure the positive boundary (could be fractional)
+    if (!positions.includes(halfOffset)) positions.push(halfOffset);
+    if (!positions.includes(-halfOffset)) positions.push(-halfOffset);
+    return positions;
+  }
 
+  const xPositions = generatePositions(w, halfW);
+  const zPositions = generatePositions(d, halfD);
   const yPositions = [];
-  for (let i = 0; i <= Math.floor(h); i++) yPositions.push(HOVER_OFFSET + i);
-  if (h !== Math.floor(h)) yPositions.push(HOVER_OFFSET + h);
+  for (let i = 0; i <= Math.floor(h); i += step) {
+    yPositions.push(HOVER_OFFSET + i);
+  }
+  const topY = HOVER_OFFSET + h;
+  const bottomY = HOVER_OFFSET;
+  if (!yPositions.includes(topY)) yPositions.push(topY);
+  if (!yPositions.includes(bottomY)) yPositions.push(bottomY);
 
-  // Vertical lines (parallel to Y)
-  for (const x of xPositions) {
-    for (const z of zPositions) {
-      const line = createLine(x, HOVER_OFFSET, z, x, HOVER_OFFSET + h, z);
-      interiorGridGroup.add(line);
-    }
+  // Helper to add a thick line
+  function addLine(x1, y1, z1, x2, y2, z2) {
+    surfaceGridGroup.add(createThickLine(x1, y1, z1, x2, y2, z2));
   }
 
-  // Lines parallel to Z
-  for (const x of xPositions) {
-    for (const y of yPositions) {
-      const line = createLine(x, y, -halfD, x, y, halfD);
-      interiorGridGroup.add(line);
-    }
-  }
+  // Front face (z = +halfD)
+  for (const x of xPositions) addLine(x, bottomY, halfD, x, topY, halfD);
+  for (const y of yPositions) addLine(-halfW, y, halfD, halfW, y, halfD);
 
-  // Lines parallel to X
-  for (const y of yPositions) {
-    for (const z of zPositions) {
-      const line = createLine(-halfW, y, z, halfW, y, z);
-      interiorGridGroup.add(line);
-    }
-  }
+  // Back face (z = -halfD)
+  for (const x of xPositions) addLine(x, bottomY, -halfD, x, topY, -halfD);
+  for (const y of yPositions) addLine(-halfW, y, -halfD, halfW, y, -halfD);
+
+  // Right face (x = +halfW)
+  for (const z of zPositions) addLine(halfW, bottomY, z, halfW, topY, z);
+  for (const y of yPositions) addLine(halfW, y, -halfD, halfW, y, halfD);
+
+  // Left face (x = -halfW)
+  for (const z of zPositions) addLine(-halfW, bottomY, z, -halfW, topY, z);
+  for (const y of yPositions) addLine(-halfW, y, -halfD, -halfW, y, halfD);
+
+  // Top face (y = topY)
+  for (const x of xPositions) addLine(x, topY, -halfD, x, topY, halfD);
+  for (const z of zPositions) addLine(-halfW, topY, z, halfW, topY, z);
+
+  // Bottom face (y = bottomY)
+  for (const x of xPositions) addLine(x, bottomY, -halfD, x, bottomY, halfD);
+  for (const z of zPositions) addLine(-halfW, bottomY, z, halfW, bottomY, z);
 }
 
 function updateGroundGrid(maxDim) {
@@ -307,21 +342,16 @@ function updatePrism() {
   boxMesh.scale.set(lastW, lastH, lastD);
   boxMesh.position.set(0, HOVER_OFFSET + lastH / 2, 0);
 
-  // If any dimension is 0, hide the box
   if (lastW <= 0 || lastH <= 0 || lastD <= 0) {
     boxMesh.visible = false;
   } else {
     boxMesh.visible = true;
   }
 
-  // Volume display
   const volume = lastW * lastH * lastD;
   volumeDisplay.textContent = `Objętość: ${parseFloat(volume.toFixed(2))}`;
 
-  // Interior grid
-  updateInteriorGrid(lastW, lastH, lastD);
-
-  // Ground grid size
+  updateSurfaceGrid(lastW, lastH, lastD);
   updateGroundGrid(Math.max(lastW, lastD));
 }
 
@@ -340,7 +370,6 @@ wsSlider.addEventListener('input', onSliderChange);
 hsSlider.addEventListener('input', onSliderChange);
 dsSlider.addEventListener('input', onSliderChange);
 
-// Text inputs: update only on change (Enter or blur)
 wInput.addEventListener('change', () => {
   const val = parseFloat(wInput.value);
   if (!isNaN(val)) {
@@ -391,7 +420,6 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-// Initial update
 updatePrism();
 animate();
 </script>
