@@ -6,17 +6,51 @@
   <title>Aplikacje</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script>
-  // Default to dark unless user explicitly chose light
-  if (localStorage.getItem('theme') !== 'light') {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  }
-</script>
+    if (localStorage.getItem('theme') !== 'light') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  </script>
   <link rel="stylesheet" href="../shared/common.css">
   <style>
     body { min-height: 100dvh; display: flex; flex-direction: column; }
-    .main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 20px; gap: 28px; }
+    .main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 32px 20px; gap: 24px; }
+
+    /* Tab navigation */
+    .tab-nav {
+      display: flex; gap: 4px; background: var(--bg2); padding: 6px 6px 0 6px;
+      border-radius: 12px 12px 0 0; border: 1px solid var(--border); border-bottom: none;
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .tab-btn {
+      padding: 10px 18px; background: transparent; border: none;
+      font-family: 'Inter', sans-serif; font-size: clamp(14px, 3.5vw, 16px);
+      font-weight: 600; color: var(--text-muted); cursor: pointer;
+      border-radius: 10px 10px 0 0;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { background: var(--hover-bg); color: var(--text); }
+    .tab-btn.active {
+      background: var(--bg-card); color: var(--text);
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* Tab content */
+    .tab-content {
+      display: none; width: 100%; max-width: 880px;
+      background: var(--bg-card); border: 1px solid var(--border); border-top: none;
+      border-radius: 0 0 12px 12px; padding: 24px 20px;
+      box-shadow: var(--shadow);
+    }
+    .tab-content.active { display: block; }
+
+    .card-grid { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
+
     @media (max-width: 600px) {
-      .main { padding: 24px 16px; gap: 16px; justify-content: flex-start; padding-top: 32px; }
+      .main { padding: 24px 14px; gap: 16px; }
+      .tab-nav { padding: 4px 4px 0 4px; gap: 2px; }
+      .tab-btn { padding: 8px 12px; font-size: clamp(13px, 4vw, 15px); }
+      .tab-content { padding: 16px 12px; }
     }
   </style>
 </head>
@@ -25,29 +59,109 @@
     <span class="topbar-title">Aplikacje</span>
     <div class="topbar-right">
       <label class="theme-toggle" title="Tryb ciemny / jasny">
-      <input type="checkbox" id="themeToggle">
-      <span class="toggle-track"><span class="toggle-thumb"></span></span>
-      <span class="toggle-icon">🌙</span>
-    </label>
+        <input type="checkbox" id="themeToggle">
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+        <span class="toggle-icon">🌙</span>
+      </label>
       <a href="../index.html" class="back-btn">← Menu</a>
     </div>
   </div>
+
   <div class="main">
-    <div class="card-grid">
-      <a href="PoleApp/index.html" class="card">
-        <div class="card-icon">📐</div>
-        <div><div class="card-title">Pole figury</div><div class="card-desc">Wizualizacja pola z siatką jednostkową.</div></div>
-      </a>
-      <a href="UlamkiApp/index.html" class="card">
-        <div class="card-icon">🥧</div>
-        <div><div class="card-title">Ułamki</div><div class="card-desc">Ułamki jako koło lub pasek.</div></div>
-      </a>
-      <a href="PrismApp/index.html" class="card">
-        <div class="card-icon">📦</div>
-        <div><div class="card-title">Prostopadłościan 3D</div><div class="card-desc">Obracany prostopadłościan z siatką.</div></div>
-      </a>
+    <div class="tab-nav" id="tabNav">
+      <button class="tab-btn active" data-tab="klasa5">Klasa 5</button>
+      <button class="tab-btn" data-tab="klasa6">Klasa 6</button>
+      <button class="tab-btn" data-tab="klasa7">Klasa 7</button>
+      <button class="tab-btn" data-tab="klasa8">Klasa 8</button>
+    </div>
+
+    <!-- Tab panes -->
+    <div class="tab-content active" id="klasa5">
+      <div class="card-grid">
+        <a href="PoleApp/index.html" class="card">
+          <div class="card-icon">📐</div>
+          <div><div class="card-title">Pole figury</div><div class="card-desc">Wizualizacja pola z siatką jednostkową.</div></div>
+        </a>
+        <a href="UlamkiApp/index.html" class="card">
+          <div class="card-icon">🥧</div>
+          <div><div class="card-title">Ułamki</div><div class="card-desc">Ułamki jako koło lub pasek.</div></div>
+        </a>
+        <a href="PrismApp/index.html" class="card">
+          <div class="card-icon">📦</div>
+          <div><div class="card-title">Prostopadłościan 3D</div><div class="card-desc">Obracany prostopadłościan z siatką.</div></div>
+        </a>
+      </div>
+    </div>
+
+    <div class="tab-content" id="klasa6">
+      <div class="card-grid">
+        <a href="PoleApp/index.html" class="card">
+          <div class="card-icon">📐</div>
+          <div><div class="card-title">Pole figury</div><div class="card-desc">Wizualizacja pola z siatką jednostkową.</div></div>
+        </a>
+        <a href="UlamkiApp/index.html" class="card">
+          <div class="card-icon">🥧</div>
+          <div><div class="card-title">Ułamki</div><div class="card-desc">Ułamki jako koło lub pasek.</div></div>
+        </a>
+        <a href="PrismApp/index.html" class="card">
+          <div class="card-icon">📦</div>
+          <div><div class="card-title">Prostopadłościan 3D</div><div class="card-desc">Obracany prostopadłościan z siatką.</div></div>
+        </a>
+      </div>
+    </div>
+
+    <div class="tab-content" id="klasa7">
+      <div class="card-grid">
+        <a href="PoleApp/index.html" class="card">
+          <div class="card-icon">📐</div>
+          <div><div class="card-title">Pole figury</div><div class="card-desc">Wizualizacja pola z siatką jednostkową.</div></div>
+        </a>
+        <a href="UlamkiApp/index.html" class="card">
+          <div class="card-icon">🥧</div>
+          <div><div class="card-title">Ułamki</div><div class="card-desc">Ułamki jako koło lub pasek.</div></div>
+        </a>
+        <a href="PrismApp/index.html" class="card">
+          <div class="card-icon">📦</div>
+          <div><div class="card-title">Prostopadłościan 3D</div><div class="card-desc">Obracany prostopadłościan z siatką.</div></div>
+        </a>
+      </div>
+    </div>
+
+    <div class="tab-content" id="klasa8">
+      <div class="card-grid">
+        <a href="PoleApp/index.html" class="card">
+          <div class="card-icon">📐</div>
+          <div><div class="card-title">Pole figury</div><div class="card-desc">Wizualizacja pola z siatką jednostkową.</div></div>
+        </a>
+        <a href="UlamkiApp/index.html" class="card">
+          <div class="card-icon">🥧</div>
+          <div><div class="card-title">Ułamki</div><div class="card-desc">Ułamki jako koło lub pasek.</div></div>
+        </a>
+        <a href="PrismApp/index.html" class="card">
+          <div class="card-icon">📦</div>
+          <div><div class="card-title">Prostopadłościan 3D</div><div class="card-desc">Obracany prostopadłościan z siatką.</div></div>
+        </a>
+      </div>
     </div>
   </div>
+
   <script src="../shared/theme.js"></script>
+  <script>
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Deactivate all tabs
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+
+        // Activate clicked tab
+        btn.classList.add('active');
+        const target = document.getElementById(btn.dataset.tab);
+        if (target) target.classList.add('active');
+      });
+    });
+  </script>
 </body>
 </html>
