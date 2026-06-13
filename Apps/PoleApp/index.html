@@ -13,22 +13,27 @@
 </script>
   <link rel="stylesheet" href="../../shared/common.css">
   <style>
-  body { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-  .canvas-wrap {
-    flex: 1; min-height: 0; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: clamp(4px, 1vh, 8px);
-    padding: clamp(6px, 2vw, 10px); overflow: hidden;
-  }
-  .area-display { flex-shrink: 0; font-size: clamp(28px, 8vw, 42px); font-weight: 700; color: var(--text); letter-spacing: -0.02em; text-align: center; line-height: 1.1; }
-  .area-sub { font-size: clamp(13px, 3.5vw, 15px); font-weight: 500; color: var(--text-muted); margin-left: 6px; }
-  .svg-container { flex: 1; min-height: 0; width: 100%; display: flex; justify-content: center; align-items: center; overflow: auto; cursor: grab; touch-action: manipulation; }
-  .svg-container:active { cursor: grabbing; }
-  svg { display: block; }
-  @media (max-width: 600px) {
-    .area-display { font-size: clamp(24px, 7vw, 32px); }
-    .area-sub { font-size: clamp(11px, 3vw, 13px); }
-  }
-</style>
+    body { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+    .canvas-wrap {
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: clamp(4px, 1vh, 8px);
+      padding: clamp(6px, 2vw, 10px); overflow: hidden;
+    }
+    .area-display { flex-shrink: 0; font-size: clamp(28px, 8vw, 42px); font-weight: 700; color: var(--text); letter-spacing: -0.02em; text-align: center; line-height: 1.1; }
+    .area-sub { font-size: clamp(13px, 3.5vw, 15px); font-weight: 500; color: var(--text-muted); margin-left: 6px; }
+    .area-formula {
+      flex-shrink: 0; font-size: clamp(14px, 4vw, 20px); font-weight: 500; color: var(--text-muted);
+      text-align: center; line-height: 1.4; margin-top: 2px;
+    }
+    .svg-container { flex: 1; min-height: 0; width: 100%; display: flex; justify-content: center; align-items: center; overflow: auto; cursor: grab; touch-action: manipulation; }
+    .svg-container:active { cursor: grabbing; }
+    svg { display: block; }
+    @media (max-width: 600px) {
+      .area-display { font-size: clamp(24px, 7vw, 32px); }
+      .area-sub { font-size: clamp(11px, 3vw, 13px); }
+      .area-formula { font-size: clamp(12px, 3.5vw, 16px); }
+    }
+  </style>
 </head>
 <body>
   <div class="topbar">
@@ -44,6 +49,7 @@
   </div>
   <div class="canvas-wrap">
     <div class="area-display">Pole: <span id="areaVal">15</span><span class="area-sub">jedn²</span></div>
+    <div class="area-formula" id="areaFormula">P = a·b = 5·3 = 15 jedn²</div>
     <div class="svg-container" id="svgContainer"><svg id="svg"></svg></div>
   </div>
   <div class="controls-bar">
@@ -73,7 +79,6 @@
       <input id="colorPicker" type="color" value="#4a90d9">
     </div>
     <div class="bar-divider"></div>
-    <!-- Checkbox for unit grid -->
     <div class="control-group">
       <span class="ctrl-label">Siatka</span>
       <input type="checkbox" id="gridCheckbox" checked>
@@ -89,6 +94,7 @@
   const gridCheckbox = document.getElementById('gridCheckbox');
   const widthLabel = document.getElementById('widthLabel');
   const heightGroup = document.getElementById('heightGroup');
+  const areaFormula = document.getElementById('areaFormula');
   let zoom=1.0;
 
   function num(v){return Math.max(0,Math.min(20,parseFloat(v)||0));}
@@ -101,7 +107,6 @@
     let width = num(w.value);
     let height = num(h.value);
 
-    // Auto‑compute height for equilateral triangle
     if (shape === 'equilateral') {
       height = width * Math.sqrt(3) / 2;
     }
@@ -109,17 +114,29 @@
     const fill=hexToRgba(colorPicker.value,0.35);
     const dark=isDark(),gs=dark?'#555':'#666',ss=dark?'#ccc':'black';
 
-    // Area calculation
     let area;
+    let formulaSym, formulaSub;
+
     if (shape === 'rectangle') {
       area = width * height;
+      formulaSym = 'P = a·b';
+      formulaSub = `${width}·${height} = ${fmt(area)} jedn²`;
+    } else if (shape === 'rightTriangle') {
+      area = (width * height) / 2;
+      formulaSym = 'P = (a·b)/2';
+      formulaSub = `(${width}·${height})/2 = ${fmt(area)} jedn²`;
     } else if (shape === 'equilateral') {
       area = (Math.sqrt(3) / 4) * width * width;
-    } else {
-      // rightTriangle or triangle (both use base*height/2)
+      formulaSym = 'P = (√3/4)·a²';
+      formulaSub = `(√3/4)·${width}² = ${fmt(area)} jedn²`;
+    } else { // isosceles triangle
       area = (width * height) / 2;
+      formulaSym = 'P = (a·h)/2';
+      formulaSub = `(${width}·${height})/2 = ${fmt(area)} jedn²`;
     }
+
     areaVal.textContent = fmt(area);
+    areaFormula.textContent = `${formulaSym} = ${formulaSub}`;
 
     const cols=Math.max(1, Math.ceil(width));
     const rows=Math.max(1, Math.ceil(height));
@@ -129,13 +146,11 @@
     const ox=PADDING, oy=PADDING;
     let s='';
 
-    // Unit grid (if enabled)
     if (gridCheckbox.checked) {
       for(let x=0;x<=cols;x++) s+=`<line x1="${ox+x*UNIT}" y1="${oy}" x2="${ox+x*UNIT}" y2="${oy+rows*UNIT}" stroke="${gs}" stroke-width="0.5"/>`;
       for(let y=0;y<=rows;y++) s+=`<line x1="${ox}" y1="${oy+y*UNIT}" x2="${ox+cols*UNIT}" y2="${oy+y*UNIT}" stroke="${gs}" stroke-width="0.5"/>`;
     }
 
-    // Drawing the shape
     if (shape === 'rectangle') {
       s+=`<rect x="${ox}" y="${oy}" width="${width*UNIT}" height="${height*UNIT}" fill="none" stroke="${ss}" stroke-width="2"/>`;
       for(let y=0;y<rows;y++) for(let x=0;x<cols;x++){
@@ -143,16 +158,13 @@
         if(vw>0 && vh>0) s+=`<rect x="${ox+x*UNIT}" y="${oy+y*UNIT}" width="${vw*UNIT}" height="${vh*UNIT}" fill="${fill}"/>`;
       }
     } else {
-      // Triangles: draw filled polygon + outline
       let pts;
       if (shape === 'rightTriangle') {
-        // Apex at top‑left, right angle at bottom‑left
         pts = `${ox},${oy} ${ox},${oy+height*UNIT} ${ox+width*UNIT},${oy+height*UNIT}`;
       } else if (shape === 'equilateral') {
-        // Apex centered, base at bottom
         const apexX = ox + width*UNIT/2;
         pts = `${apexX},${oy} ${ox},${oy+height*UNIT} ${ox+width*UNIT},${oy+height*UNIT}`;
-      } else { // generic triangle (isosceles)
+      } else {
         const apexX = ox + width*UNIT/2;
         pts = `${apexX},${oy} ${ox},${oy+height*UNIT} ${ox+width*UNIT},${oy+height*UNIT}`;
       }
@@ -162,7 +174,6 @@
     svg.innerHTML = s;
   }
 
-  // Toggle height controls and label for equilateral
   function updateUIForShape() {
     const shape = shapeSelect.value;
     if (shape === 'equilateral') {
@@ -193,7 +204,6 @@
   gridCheckbox.addEventListener('change', draw);
   window.addEventListener('themechange', draw);
 
-  // Initial UI state
   updateUIForShape();
   draw();
   </script>
