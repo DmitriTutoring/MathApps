@@ -12,8 +12,12 @@
   </script>
   <link rel="stylesheet" href="../shared/common.css">
   <style>
-    body { min-height: 100dvh; display: flex; flex-direction: column; }
-    .main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 32px 20px; gap: 24px; }
+    body { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+    .main {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 24px 20px; gap: 20px;
+      overflow-y: auto;            /* scroll inside main only if needed */
+    }
 
     /* ── Tab container – one rounded box ── */
     .tab-container {
@@ -22,10 +26,9 @@
       border: 1px solid var(--border);
       border-radius: 16px;
       box-shadow: var(--shadow);
-      overflow: hidden; /* keeps everything inside the rounded border */
+      overflow: hidden;
     }
 
-    /* Tab navigation */
     .tab-nav {
       display: flex; gap: 4px;
       background: var(--bg2);
@@ -41,16 +44,15 @@
       transition: background 0.15s, color 0.15s;
       white-space: nowrap;
       position: relative;
-      top: 1px; /* so active tab blends into content area */
+      top: 1px;
     }
     .tab-btn:hover { background: var(--hover-bg); color: var(--text); }
     .tab-btn.active {
       background: var(--bg-card); color: var(--text);
       border: 1px solid var(--border);
-      border-bottom-color: var(--bg-card); /* hides the border between tab and content */
+      border-bottom-color: var(--bg-card);
     }
 
-    /* Tab content */
     .tab-content {
       display: none;
       padding: 28px 24px 24px;
@@ -60,7 +62,7 @@
     .card-grid { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
 
     @media (max-width: 600px) {
-      .main { padding: 24px 14px; gap: 16px; }
+      .main { padding: 20px 12px; gap: 14px; }
       .tab-container { border-radius: 14px; }
       .tab-nav { padding: 6px 6px 0 6px; gap: 2px; }
       .tab-btn { padding: 8px 14px; font-size: clamp(13px, 4vw, 15px); }
@@ -151,11 +153,9 @@
 
     tabButtons.forEach(btn => {
       btn.addEventListener('click', () => {
-        // Deactivate all
         tabButtons.forEach(b => b.classList.remove('active'));
         tabContents.forEach(c => c.classList.remove('active'));
 
-        // Activate clicked tab
         btn.classList.add('active');
         const target = document.getElementById(btn.dataset.tab);
         if (target) target.classList.add('active');
