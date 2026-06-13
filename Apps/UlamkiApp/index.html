@@ -4,100 +4,154 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wizualizacja ułamków</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
 
   :root {
     --bg: #f5f0e8; --bg2: #ebe5d9; --bg-card: #ffffff;
-    --border: #e0d8cc; --text: #2c2c2c; --text-muted: #999; --text-sub: #777;
-    --input-bg: #fdfcf9; --input-border: #d5cdc0; --hover-bg: #e4ddd1;
-    --accent: #7a6a55; --divider: #ddd;
+    --border: #e0d8cc; --text: #2c2c2c; --text-muted: #888; --text-sub: #777;
+    --input-bg: #fdfcf9; --input-border: #c8c0b4; --hover-bg: #e4ddd1;
+    --accent: #7a6a55; --divider: #d8d0c4;
     --shadow: 0 2px 10px rgba(0,0,0,0.05); --shadow-hover: 0 8px 24px rgba(0,0,0,0.10);
   }
   [data-theme="dark"] {
     --bg: #1c1b18; --bg2: #242320; --bg-card: #242320;
     --border: #38362f; --text: #e8e2d8; --text-muted: #6a6455; --text-sub: #8a8070;
-    --input-bg: #2a2825; --input-border: #45433a; --hover-bg: #2e2c28;
-    --accent: #a08c70; --divider: #38362f;
+    --input-bg: #2a2825; --input-border: #4a4840; --hover-bg: #2e2c28;
+    --accent: #a08c70; --divider: #3a3830;
     --shadow: 0 2px 10px rgba(0,0,0,0.3); --shadow-hover: 0 8px 24px rgba(0,0,0,0.4);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); transition: background 0.2s, color 0.2s; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg); color: var(--text);
+    transition: background 0.2s, color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── Topbar ── */
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 22px; background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 13px 18px; background: var(--bg2); border-bottom: 1px solid var(--border);
     flex-shrink: 0; transition: background 0.2s, border-color 0.2s;
+    min-height: 52px;
   }
-  .topbar-title { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: 0.01em; }
-  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .topbar-title { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: 0.01em; }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+
   .back-btn {
-    font-size: 13px; font-weight: 500; color: var(--text-muted); text-decoration: none;
-    padding: 5px 11px; border: 1px solid var(--input-border); border-radius: 6px;
-    background: transparent; white-space: nowrap; transition: background 0.15s, color 0.15s;
+    font-size: 13px; font-weight: 600; color: var(--text-muted); text-decoration: none;
+    padding: 7px 13px; border: 1.5px solid var(--input-border); border-radius: 8px;
+    background: var(--input-bg); white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
   }
   .back-btn:hover { background: var(--hover-bg); color: var(--text); }
+
+  /* ── Dark mode toggle ── */
   .theme-toggle { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
   .theme-toggle input[type="checkbox"] { display: none; }
   .toggle-track {
-    width: 34px; height: 18px; background: var(--divider); border-radius: 9px;
+    width: 38px; height: 22px; background: var(--divider); border-radius: 11px;
     position: relative; transition: background 0.2s; flex-shrink: 0;
   }
   .theme-toggle input:checked + .toggle-track { background: var(--accent); }
   .toggle-thumb {
-    width: 14px; height: 14px; background: white; border-radius: 50%;
-    position: absolute; top: 2px; left: 2px; transition: transform 0.2s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    width: 16px; height: 16px; background: white; border-radius: 50%;
+    position: absolute; top: 3px; left: 3px; transition: transform 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
   }
   .theme-toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); }
-  .toggle-icon { font-size: 13px; line-height: 1; }
+  .toggle-icon { font-size: 14px; line-height: 1; }
+
+  /* ── Bottom controls bar ── */
   .controls-bar {
-    flex-shrink: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
-    gap: 16px; padding: 10px 20px 13px; background: var(--bg2); border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 14px 20px; padding: 12px 16px 16px;
+    background: var(--bg2); border-top: 1px solid var(--border);
     transition: background 0.2s, border-color 0.2s;
   }
-  .control-group { display: flex; align-items: center; gap: 7px; }
-  .ctrl-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
-  .bar-divider { width: 1px; height: 24px; background: var(--divider); }
+  .control-group { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+  .ctrl-label {
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.09em; white-space: nowrap;
+    min-width: 56px;
+  }
+  .bar-divider { width: 1px; height: 28px; background: var(--divider); flex-shrink: 0; }
+
+  /* ── Inputs ── */
   input[type="text"] {
-    width: 52px; padding: 5px 6px; border: 1px solid var(--input-border); border-radius: 6px;
-    font-size: 13px; font-family: 'Inter', sans-serif; text-align: center;
-    background: var(--input-bg); color: var(--text); outline: none;
-    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    width: 56px; padding: 7px 8px;
+    border: 1.5px solid var(--input-border); border-radius: 8px;
+    font-size: 15px; font-weight: 600; font-family: 'Inter', sans-serif;
+    text-align: center; background: var(--input-bg); color: var(--text);
+    outline: none; transition: background 0.2s, border-color 0.2s, color 0.2s;
   }
   input[type="text"]:focus { border-color: var(--accent); }
-  input[type="range"] { accent-color: var(--accent); cursor: pointer; width: 110px; }
+  input[type="range"] {
+    accent-color: var(--accent); cursor: pointer;
+    width: 120px; height: 20px;
+  }
   select {
-    padding: 5px 8px; border: 1px solid var(--input-border); border-radius: 6px;
-    font-size: 13px; font-family: 'Inter', sans-serif;
-    background: var(--input-bg); color: var(--text); cursor: pointer; outline: none;
-    transition: background 0.2s, color 0.2s;
+    padding: 7px 10px; border: 1.5px solid var(--input-border); border-radius: 8px;
+    font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif;
+    background: var(--input-bg); color: var(--text);
+    cursor: pointer; outline: none; transition: background 0.2s, color 0.2s;
   }
   input[type="color"] {
-    width: 30px; height: 26px; border: 1px solid var(--input-border);
-    border-radius: 6px; cursor: pointer; background: var(--input-bg); padding: 2px;
+    width: 36px; height: 32px; border: 1.5px solid var(--input-border);
+    border-radius: 8px; cursor: pointer; background: var(--input-bg); padding: 2px;
   }
-  .card-grid { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+
+  /* ── Cards ── */
+  .card-grid { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; }
   .card {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
-    padding: 30px 22px; text-align: center; text-decoration: none; color: var(--text);
-    display: block; box-shadow: var(--shadow);
+    background: var(--bg-card); border: 1.5px solid var(--border); border-radius: 14px;
+    padding: 28px 20px; text-align: center; text-decoration: none; color: var(--text);
+    display: block; box-shadow: var(--shadow); width: 220px;
     transition: box-shadow 0.2s, transform 0.2s, background 0.2s, border-color 0.2s;
   }
   .card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
-  .card-icon { font-size: 42px; margin-bottom: 12px; }
-  .card-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
-  .card-desc { font-size: 13px; color: var(--text-sub); line-height: 1.5; }
+  .card-icon { font-size: 40px; margin-bottom: 12px; }
+  .card-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .card-desc { font-size: 13px; font-weight: 400; color: var(--text-sub); line-height: 1.5; }
 
-    body { height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  /* ── Mobile ── */
+  @media (max-width: 600px) {
+    .topbar { padding: 11px 14px; }
+    .topbar-title { font-size: 14px; }
+    .back-btn { font-size: 12px; padding: 6px 10px; }
+    .controls-bar { gap: 10px 14px; padding: 10px 12px 14px; }
+    .ctrl-label { font-size: 10px; min-width: 48px; }
+    input[type="text"] { width: 48px; font-size: 14px; padding: 6px; }
+    input[type="range"] { width: 90px; }
+    select { font-size: 13px; padding: 6px 8px; }
+    .bar-divider { display: none; }
+    .card { width: 160px; padding: 20px 14px; }
+    .card-icon { font-size: 32px; margin-bottom: 8px; }
+    .card-title { font-size: 14px; }
+    .card-desc { font-size: 12px; }
+  }
+  @media (max-width: 380px) {
+    .card { width: 140px; }
+    input[type="range"] { width: 75px; }
+  }
+
+    body { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
     .canvas-wrap {
       flex: 1; min-height: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 10px; padding: 12px 12px 8px; overflow: hidden;
+      align-items: center; justify-content: center; gap: 8px; padding: 10px 10px 6px; overflow: hidden;
     }
     .frac-display { flex-shrink: 0; display: flex; align-items: center; gap: 10px; line-height: 1; }
     .frac-stack { display: inline-flex; flex-direction: column; align-items: center; font-size: 48px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
-    .frac-line { width: 100%; min-width: 24px; height: 3px; background: var(--text); margin: 2px 0; border-radius: 1px; }
-    .frac-decimal { font-size: 20px; font-weight: 400; color: var(--text-muted); }
+    .frac-line { width: 100%; min-width: 28px; height: 3px; background: currentColor; margin: 3px 0; border-radius: 2px; }
+    .frac-decimal { font-size: 20px; font-weight: 500; color: var(--text-muted); }
     svg { display: block; flex: 1; min-height: 0; max-width: 100%; max-height: 100%; }
+    @media (max-width: 600px) {
+      .frac-stack { font-size: 36px; }
+      .frac-decimal { font-size: 16px; }
+      .canvas-wrap { gap: 6px; padding: 8px 8px 4px; }
+    }
   </style>
 </head>
 <body>
@@ -126,13 +180,13 @@
   <div class="controls-bar">
     <div class="control-group">
       <span class="ctrl-label">Licznik</span>
-      <input id="num" type="text" value="3" style="width:44px">
+      <input id="num" type="text" inputmode="numeric" value="3">
       <input id="nums" type="range" min="0" max="10" step="1" value="3">
     </div>
     <div class="bar-divider"></div>
     <div class="control-group">
       <span class="ctrl-label">Mianownik</span>
-      <input id="den" type="text" value="4" style="width:44px">
+      <input id="den" type="text" inputmode="numeric" value="4">
       <input id="dens" type="range" min="1" max="20" step="1" value="4">
     </div>
     <div class="bar-divider"></div>
@@ -171,82 +225,59 @@
   })();
 </script>
   <script>
-  const numInput = document.getElementById('num');
-  const denInput = document.getElementById('den');
-  const numSlider = document.getElementById('nums');
-  const denSlider = document.getElementById('dens');
-  const modeSelect = document.getElementById('modeSelect');
-  const colorPicker = document.getElementById('colorPicker');
-  const fracNum = document.getElementById('fracNum');
-  const fracDen = document.getElementById('fracDen');
-  const decimalText = document.getElementById('decimalText');
-  const svg = document.getElementById('svg');
+  const numInput=document.getElementById('num'), denInput=document.getElementById('den');
+  const numSlider=document.getElementById('nums'), denSlider=document.getElementById('dens');
+  const modeSelect=document.getElementById('modeSelect'), colorPicker=document.getElementById('colorPicker');
+  const fracNum=document.getElementById('fracNum'), fracDen=document.getElementById('fracDen');
+  const decimalText=document.getElementById('decimalText'), svg=document.getElementById('svg');
 
-  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
-  function hexToRgba(hex, alpha) {
-    hex = hex.replace('#', '');
-    const r = parseInt(hex.substring(0,2),16), g = parseInt(hex.substring(2,4),16), b = parseInt(hex.substring(4,6),16);
-    return `rgba(${r},${g},${b},${alpha})`;
-  }
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function hexToRgba(hex,alpha){hex=hex.replace('#','');const r=parseInt(hex.substring(0,2),16),g=parseInt(hex.substring(2,4),16),b=parseInt(hex.substring(4,6),16);return `rgba(${r},${g},${b},${alpha})`;}
+  function isDark(){return document.documentElement.getAttribute('data-theme')==='dark';}
 
-  function draw() {
-    let numerator = parseInt(numInput.value) || 0;
-    let denominator = parseInt(denInput.value) || 1;
-    denominator = Math.max(1, Math.min(20, denominator));
-    numerator = clamp(numerator, 0, denominator);
-    numSlider.max = denominator; numSlider.value = numerator; numInput.value = numerator;
-    denSlider.value = denominator; denInput.value = denominator;
-    fracNum.textContent = numerator; fracDen.textContent = denominator;
-    decimalText.textContent = (numerator / denominator).toFixed(4).replace(/\.?0+$/, '');
-
-    const mode = modeSelect.value;
-    const fillColor = hexToRgba(colorPicker.value, 0.65);
-    const unfilledColor = document.documentElement.getAttribute('data-theme') === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(200,200,200,0.12)';
-    const strokeColor = document.documentElement.getAttribute('data-theme') === 'dark' ? '#888888' : '#222222';
-    const PAD = 40; let s = '';
-
-    if (mode === 'pie') {
-      const vbSize = 440, cx = vbSize/2, cy = vbSize/2, r = 180;
-      svg.setAttribute('viewBox', `0 0 ${vbSize} ${vbSize}`);
+  function draw(){
+    let num=parseInt(numInput.value)||0, den=parseInt(denInput.value)||1;
+    den=Math.max(1,Math.min(20,den)); num=clamp(num,0,den);
+    numSlider.max=den; numSlider.value=num; numInput.value=num;
+    denSlider.value=den; denInput.value=den;
+    fracNum.textContent=num; fracDen.textContent=den;
+    decimalText.textContent=(num/den).toFixed(4).replace(/\.?0+$/,'');
+    const mode=modeSelect.value, fillColor=hexToRgba(colorPicker.value,0.65);
+    const dark=isDark();
+    const unfill=dark?'rgba(255,255,255,0.06)':'rgba(200,200,200,0.12)';
+    const stroke=dark?'#999':'#222';
+    const PAD=40; let s='';
+    if(mode==='pie'){
+      const vs=440,cx=vs/2,cy=vs/2,r=180;
+      svg.setAttribute('viewBox',`0 0 ${vs} ${vs}`);
       svg.setAttribute('width','100%'); svg.setAttribute('height','100%');
       svg.setAttribute('preserveAspectRatio','xMidYMid meet');
-      if (denominator > 0) {
-        const angleStep = (2 * Math.PI) / denominator;
-        for (let i = 0; i < denominator; i++) {
-          const sa = -Math.PI/2 + i*angleStep, ea = sa + angleStep;
-          const x1=cx+r*Math.cos(sa), y1=cy+r*Math.sin(sa), x2=cx+r*Math.cos(ea), y2=cy+r*Math.sin(ea);
-          const la = angleStep > Math.PI ? 1 : 0;
-          s += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${la},1 ${x2},${y2} Z" fill="${i < numerator ? fillColor : unfilledColor}" stroke="none"/>`;
-        }
-        for (let i = 0; i < denominator; i++) {
-          const a = -Math.PI/2 + i*angleStep;
-          s += `<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(a)}" y2="${cy+r*Math.sin(a)}" stroke="${strokeColor}" stroke-opacity="0.2" stroke-width="1"/>`;
-        }
-        s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${strokeColor}" stroke-width="2"/>`;
+      if(den>0){
+        const as=(2*Math.PI)/den;
+        for(let i=0;i<den;i++){const sa=-Math.PI/2+i*as,ea=sa+as,x1=cx+r*Math.cos(sa),y1=cy+r*Math.sin(sa),x2=cx+r*Math.cos(ea),y2=cy+r*Math.sin(ea),la=as>Math.PI?1:0,fill=i<num?fillColor:unfill;s+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${la},1 ${x2},${y2} Z" fill="${fill}" stroke="none"/>`;}
+        for(let i=0;i<den;i++){const a=-Math.PI/2+i*as;s+=`<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(a)}" y2="${cy+r*Math.sin(a)}" stroke="${stroke}" stroke-opacity="0.2" stroke-width="1"/>`;}
+        s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${stroke}" stroke-width="2"/>`;
       }
     } else {
-      const UNIT=48, BAR_H=100, totalW=denominator*UNIT+2*PAD, totalH=BAR_H+2*PAD;
-      svg.setAttribute('viewBox',`0 0 ${totalW} ${totalH}`);
+      const U=48,BH=100,tw=den*U+2*PAD,th=BH+2*PAD;
+      svg.setAttribute('viewBox',`0 0 ${tw} ${th}`);
       svg.setAttribute('width','100%'); svg.setAttribute('height','100%');
       svg.setAttribute('preserveAspectRatio','xMidYMid meet');
-      const bx=PAD, by=PAD;
-      s += `<rect x="${bx}" y="${by}" width="${denominator*UNIT}" height="${BAR_H}" rx="6" fill="none" stroke="${strokeColor}" stroke-width="2"/>`;
-      if (numerator > 0) {
-        s += `<rect x="${bx}" y="${by}" width="${numerator*UNIT}" height="${BAR_H}" rx="6" fill="${fillColor}"/>`;
-        s += `<rect x="${bx}" y="${by}" width="${denominator*UNIT}" height="${BAR_H}" rx="6" fill="none" stroke="${strokeColor}" stroke-width="2"/>`;
-      }
-      for (let i=1; i<denominator; i++) { const x=bx+i*UNIT; s += `<line x1="${x}" y1="${by}" x2="${x}" y2="${by+BAR_H}" stroke="${strokeColor}" stroke-opacity="0.25" stroke-width="0.8"/>`; }
+      const bx=PAD,by=PAD;
+      s+=`<rect x="${bx}" y="${by}" width="${den*U}" height="${BH}" rx="6" fill="none" stroke="${stroke}" stroke-width="2"/>`;
+      if(num>0){s+=`<rect x="${bx}" y="${by}" width="${num*U}" height="${BH}" rx="6" fill="${fillColor}"/>`;s+=`<rect x="${bx}" y="${by}" width="${den*U}" height="${BH}" rx="6" fill="none" stroke="${stroke}" stroke-width="2"/>`;}
+      for(let i=1;i<den;i++){const x=bx+i*U;s+=`<line x1="${x}" y1="${by}" x2="${x}" y2="${by+BH}" stroke="${stroke}" stroke-opacity="0.2" stroke-width="0.8"/>`;}
     }
-    svg.innerHTML = s;
+    svg.innerHTML=s;
   }
 
-  function onNumChange() { let v=parseInt(numInput.value)||0; const d=parseInt(denInput.value)||1; v=clamp(v,0,d); numInput.value=v; numSlider.value=v; draw(); }
-  function onDenChange() { let v=parseInt(denInput.value)||1; v=Math.max(1,Math.min(20,v)); denInput.value=v; denSlider.value=v; let n=parseInt(numInput.value)||0; if(n>v){n=v;numInput.value=n;numSlider.value=n;} numSlider.max=v; draw(); }
-  numInput.oninput=onNumChange; denInput.oninput=onDenChange;
+  function onNum(){let v=parseInt(numInput.value)||0;const d=parseInt(denInput.value)||1;v=clamp(v,0,d);numInput.value=v;numSlider.value=v;draw();}
+  function onDen(){let v=parseInt(denInput.value)||1;v=Math.max(1,Math.min(20,v));denInput.value=v;denSlider.value=v;let n=parseInt(numInput.value)||0;if(n>v){n=v;numInput.value=n;numSlider.value=n;}numSlider.max=v;draw();}
+  numInput.oninput=onNum; denInput.oninput=onDen;
   numSlider.oninput=()=>{numInput.value=numSlider.value;draw();};
   denSlider.oninput=()=>{const v=parseInt(denSlider.value);denInput.value=v;let n=parseInt(numInput.value)||0;if(n>v){n=v;numInput.value=n;numSlider.value=n;}numSlider.max=v;draw();};
   modeSelect.onchange=()=>draw(); colorPicker.oninput=()=>draw();
-  window.addEventListener('themechange', draw);
+  window.addEventListener('themechange',draw);
   draw();
   </script>
 </body>
