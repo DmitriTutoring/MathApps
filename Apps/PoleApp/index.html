@@ -60,19 +60,18 @@
       flex-shrink: 0;
     }
     .shape-options {
-  position: absolute;
-  bottom: calc(100% + 6px);   /* opens upward */
-  left: 0;
-  z-index: 20;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 -4px 16px rgba(0,0,0,0.15);   /* shadow upward */
-  min-width: 100%;
-  overflow: hidden;
-  display: none;
-}
-.shape-options.open { display: block; }
+      position: absolute;
+      bottom: calc(100% + 6px);   /* opens upward */
+      left: 0;
+      z-index: 20;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.15);
+      min-width: 100%;
+      overflow: hidden;
+      display: none;
+    }
     .shape-options.open { display: block; }
     .shape-option {
       display: flex; align-items: center; gap: 8px;
@@ -138,7 +137,7 @@
     <div class="bar-divider"></div>
     <div class="control-group">
       <span class="ctrl-label">Kształt</span>
-      <!-- Hidden native select (kept for logic) -->
+      <!-- Hidden native select -->
       <select id="shapeSelect" style="display:none;">
         <option value="rectangle" selected>Prostokąt</option>
         <option value="rightTriangle">Trójkąt prostokątny</option>
@@ -193,7 +192,6 @@
   const shapePickerLabel = document.getElementById('shapePickerLabel');
   const shapeOptions = document.getElementById('shapeOptions');
 
-  // Mapping value → { name, icon file }
   const shapesInfo = {
     rectangle:       { name: 'Prostokąt',            icon: 'img/shapes/rectangle.png' },
     rightTriangle:   { name: 'Trójkąt prostokątny',  icon: 'img/shapes/rightTriangle.png' },
@@ -204,7 +202,6 @@
     trapezoid:       { name: 'Trapez',               icon: 'img/shapes/trapezoid.png' }
   };
 
-  // Build option list
   function buildShapeOptions() {
     shapeOptions.innerHTML = '';
     for (const [value, info] of Object.entries(shapesInfo)) {
@@ -221,21 +218,17 @@
   }
   buildShapeOptions();
 
-  // Update picker button to reflect current shape
   function updateShapePickerButton() {
     const val = shapeSelect.value;
     const info = shapesInfo[val];
     shapePickerLabel.textContent = info.name;
     shapePickerIcon.src = info.icon;
-    shapePickerIcon.style.display = ''; // in case previously hidden
-
-    // Highlight active option
+    shapePickerIcon.style.display = '';
     document.querySelectorAll('.shape-option').forEach(opt => {
       opt.classList.toggle('active', opt.dataset.value === val);
     });
   }
 
-  // Open/close
   function openShapePicker() {
     shapeOptions.classList.add('open');
   }
@@ -251,14 +244,12 @@
     }
   });
 
-  // Close when clicking outside
   document.addEventListener('click', (e) => {
     if (!document.getElementById('shapePicker').contains(e.target)) {
       closeShapePicker();
     }
   });
 
-  // When a shape is selected (called from option click)
   function selectShape(value) {
     shapeSelect.value = value;
     updateShapePickerButton();
@@ -266,7 +257,6 @@
     draw();
   }
 
-  // Also listen to the hidden select (for programmatic changes, if any)
   shapeSelect.addEventListener('change', () => {
     updateShapePickerButton();
     updateUIForShape();
@@ -331,7 +321,7 @@
     areaVal.textContent = fmt(area);
     katex.render(latexString, areaFormula, { throwOnError: false });
 
-    // ── vertices ──
+    // vertices
     let vertices = [];
     const uW = width, uH = height;
     if (shape === 'rectangle') {
@@ -418,13 +408,34 @@
     svg.innerHTML = s;
   }
 
-  // ── UI updates (sliders, labels, etc.) ──
+  // ── UI updates + rhombus height clamping ──
+  function clampRhombusHeight() {
+    // only when rhombus is selected
+    if (shapeSelect.value !== 'rhombus') return;
+    const side = num(w.value);
+    let curHeight = num(h.value);
+    // height cannot exceed side length
+    if (curHeight > side) {
+      curHeight = side;
+      h.value = curHeight;
+      hs.value = curHeight;
+    }
+    // set slider max to side
+    hs.max = side;
+    // also ensure the text input respects the limit (set attribute not strictly needed)
+    h.setAttribute('max', side);
+  }
+
   function updateUIForShape() {
     const shape = shapeSelect.value;
     heightGroup.style.display = '';
     base2Group.style.display = 'none';
     widthLabel.textContent = 'Długość';
     heightLabel.textContent = 'Wysokość';
+
+    // Reset height slider max to default 20 (will be overridden for rhombus)
+    hs.max = 20;
+    h.removeAttribute('max');
 
     if (shape === 'equilateral') {
       heightGroup.style.display = 'none';
@@ -442,6 +453,10 @@
         widthLabel.textContent = 'Podstawa';
       }
       heightLabel.textContent = 'Wysokość';
+      // For rhombus, apply clamping after labels are set
+      if (shape === 'rhombus') {
+        clampRhombusHeight();
+      }
     } else if (shape === 'trapezoid') {
       widthLabel.textContent = 'Podstawa 1';
       heightLabel.textContent = 'Wysokość';
@@ -450,23 +465,74 @@
   }
 
   // ── Event listeners ──
-  w.oninput = draw;
-  h.oninput = draw;
+  w.oninput = () => {
+    // If rhombus, adjust height when side changes
+    if (shapeSelect.value === 'rhombus') {
+      clampRhombusHeight();
+    }
+    draw();
+  };
+  h.oninput = () => {
+    // Prevent manual input greater than side when rhombus
+    if (shapeSelect.value === 'rhombus') {
+      const side = num(w.value);
+      let cur = num(h.value);
+      if (cur > side) {
+        cur = side;
+        h.value = cur;
+        hs.value = cur;
+      }
+    }
+    draw();
+  };
   b2.oninput = draw;
-  ws.oninput = () => { w.value = ws.value; draw(); };
-  hs.oninput = () => { h.value = hs.value; draw(); };
+
+  ws.oninput = () => {
+    w.value = ws.value;
+    if (shapeSelect.value === 'rhombus') clampRhombusHeight();
+    draw();
+  };
+  hs.oninput = () => {
+    // Clamp slider value to max (which may be set by rhombus logic)
+    let val = parseFloat(hs.value);
+    if (shapeSelect.value === 'rhombus') {
+      const side = num(w.value);
+      if (val > side) val = side;
+      hs.value = val;
+    }
+    h.value = val;
+    draw();
+  };
   b2s.oninput = () => { b2.value = b2s.value; draw(); };
+
   colorPicker.oninput = draw;
   gridCheckbox.addEventListener('change', draw);
   window.addEventListener('themechange', draw);
 
-  w.addEventListener('change', () => { const v = num(w.value); w.value = v; ws.value = v; draw(); });
-  h.addEventListener('change', () => { const v = num(h.value); h.value = v; hs.value = v; draw(); });
+  // Manual text input change (enter / blur)
+  w.addEventListener('change', () => {
+    let v = num(w.value);
+    w.value = v;
+    ws.value = v;
+    if (shapeSelect.value === 'rhombus') clampRhombusHeight();
+    draw();
+  });
+  h.addEventListener('change', () => {
+    let v = num(h.value);
+    if (shapeSelect.value === 'rhombus') {
+      const side = num(w.value);
+      if (v > side) v = side;
+    }
+    h.value = v;
+    hs.value = v;
+    draw();
+  });
   b2.addEventListener('change', () => { const v = num(b2.value); b2.value = v; b2s.value = v; draw(); });
 
   // Initial setup
   updateShapePickerButton();
   updateUIForShape();
+  // Ensure rhombus height is clamped on first load (if default is rhombus, it isn't)
   draw();
   </script>
 </body>
