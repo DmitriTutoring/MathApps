@@ -69,7 +69,7 @@
       <input id="hs" type="range" min="0" max="20" step="1" value="3">
     </div>
     <div class="bar-divider"></div>
-    <!-- nowy input dla trapezu (druga podstawa) -->
+    <!-- drugi bok dla trapezu -->
     <div class="control-group" id="base2Group" style="display: none;">
       <span class="ctrl-label">Podstawa 2</span>
       <input id="b2" type="text" inputmode="decimal" value="4">
@@ -100,25 +100,31 @@
   </div>
   <script src="../../shared/theme.js"></script>
   <script>
-  const UNIT=40, PADDING=2*UNIT;
-  const w=document.getElementById('w'), h=document.getElementById('h'), b2=document.getElementById('b2');
-  const ws=document.getElementById('ws'), hs=document.getElementById('hs'), b2s=document.getElementById('b2s');
-  const shapeSelect=document.getElementById('shapeSelect'), colorPicker=document.getElementById('colorPicker');
-  const areaVal=document.getElementById('areaVal'), svg=document.getElementById('svg'), svgContainer=document.getElementById('svgContainer');
+  const UNIT = 40;
+  const PADDING = 2 * UNIT;   // 80
+
+  const w = document.getElementById('w'), h = document.getElementById('h'), b2 = document.getElementById('b2');
+  const ws = document.getElementById('ws'), hs = document.getElementById('hs'), b2s = document.getElementById('b2s');
+  const shapeSelect = document.getElementById('shapeSelect'), colorPicker = document.getElementById('colorPicker');
+  const areaVal = document.getElementById('areaVal'), svg = document.getElementById('svg'), svgContainer = document.getElementById('svgContainer');
   const gridCheckbox = document.getElementById('gridCheckbox');
   const widthLabel = document.getElementById('widthLabel');
   const heightGroup = document.getElementById('heightGroup');
   const heightLabel = document.getElementById('heightLabel');
   const base2Group = document.getElementById('base2Group');
   const areaFormula = document.getElementById('areaFormula');
-  let zoom=1.0;
+  let zoom = 1.0;
 
-  function num(v){return Math.max(0, Math.min(20, parseFloat(v)||0));}
-  function fmt(n){return parseFloat(n.toFixed(4)).toString();}
-  function hexToRgba(hex,alpha){hex=hex.replace('#','');const r=parseInt(hex.substring(0,2),16),g=parseInt(hex.substring(2,4),16),b=parseInt(hex.substring(4,6),16);return `rgba(${r},${g},${b},${alpha})`;}
-  function isDark(){return document.documentElement.getAttribute('data-theme')==='dark';}
+  function num(v) { return Math.max(0, Math.min(20, parseFloat(v) || 0)); }
+  function fmt(n) { return parseFloat(n.toFixed(4)).toString(); }
+  function hexToRgba(hex, alpha) {
+    hex = hex.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16), g = parseInt(hex.substring(2, 4), 16), b = parseInt(hex.substring(4, 6), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+  function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
 
-  function draw(){
+  function draw() {
     const shape = shapeSelect.value;
     let width = num(w.value);
     let height = num(h.value);
@@ -128,12 +134,15 @@
       height = width * Math.sqrt(3) / 2;
     }
 
-    const fill=hexToRgba(colorPicker.value,0.35);
-    const dark=isDark(), gs=dark?'#555':'#666', ss=dark?'#ccc':'black';
+    const fill = hexToRgba(colorPicker.value, 0.35);
+    const dark = isDark(),
+          gs = dark ? '#555' : '#666',
+          ss = dark ? '#ccc' : 'black';
 
     let area;
     let formulaSym, formulaSub, latexString;
 
+    // ---------- obszar i wzór ----------
     if (shape === 'rectangle') {
       area = width * height;
       formulaSym = 'P = a \\cdot b';
@@ -150,12 +159,8 @@
       area = (width * height) / 2;
       formulaSym = 'P = \\frac{a \\cdot h}{2}';
       formulaSub = `\\frac{${width} \\cdot ${height}}{2} = ${fmt(area)}`;
-    } else if (shape === 'parallelogram') {
+    } else if (shape === 'parallelogram' || shape === 'rhombus') {
       area = width * height;
-      formulaSym = 'P = a \\cdot h';
-      formulaSub = `${width} \\cdot ${height} = ${fmt(area)}`;
-    } else if (shape === 'rhombus') {
-      area = width * height;  // a*h, same as parallelogram
       formulaSym = 'P = a \\cdot h';
       formulaSub = `${width} \\cdot ${height} = ${fmt(area)}`;
     } else if (shape === 'trapezoid') {
@@ -168,73 +173,105 @@
     areaVal.textContent = fmt(area);
     katex.render(latexString, areaFormula, { throwOnError: false });
 
-    // dla rysowania potrzebujemy cols/rows na podstawie maksymalnych rozmiarów
-    let maxW = width;
-    if (shape === 'trapezoid') maxW = Math.max(width, base2Val);
-    const cols=Math.max(1, Math.ceil(maxW));
-    const rows=Math.max(1, Math.ceil(height));
-    const bW=cols*UNIT+2*PADDING, bH=rows*UNIT+2*PADDING;
-    svg.setAttribute('viewBox',`0 0 ${bW} ${bH}`);
-    svg.setAttribute('width',bW*zoom); svg.setAttribute('height',bH*zoom);
-    const ox=PADDING, oy=PADDING;
-    let s='';
-
-    if (gridCheckbox.checked) {
-      for(let x=0;x<=cols;x++) s+=`<line x1="${ox+x*UNIT}" y1="${oy}" x2="${ox+x*UNIT}" y2="${oy+rows*UNIT}" stroke="${gs}" stroke-width="0.5"/>`;
-      for(let y=0;y<=rows;y++) s+=`<line x1="${ox}" y1="${oy+y*UNIT}" x2="${ox+cols*UNIT}" y2="${oy+y*UNIT}" stroke="${gs}" stroke-width="0.5"/>`;
+    // ---------- wierzchołki w jednostkach siatki ----------
+    // (ux, uy) – współrzędne w kratkach względem lewego‑górnego rogu obwiedni
+    let vertices = [];
+    const uW = width, uH = height;
+    if (shape === 'rectangle') {
+      vertices = [[0, 0], [uW, 0], [uW, uH], [0, uH]];
+    } else if (shape === 'rightTriangle') {
+      vertices = [[0, 0], [0, uH], [uW, uH]];
+    } else if (shape === 'equilateral' || shape === 'triangle') {
+      vertices = [[uW/2, 0], [0, uH], [uW, uH]];
+    } else if (shape === 'parallelogram') {
+      const offset = uW * 0.3;
+      vertices = [[0, uH], [uW, uH], [uW + offset, 0], [offset, 0]];
+    } else if (shape === 'rhombus') {
+      // bok = uW, wysokość = uH; offset = sqrt(uW^2 - uH^2), 0 jeśli uH >= uW
+      const offset = (uH < uW) ? Math.sqrt(uW*uW - uH*uH) : 0;
+      vertices = [[0, uH], [uW, uH], [uW + offset, 0], [offset, 0]];
+    } else if (shape === 'trapezoid') {
+      const topBase = base2Val;
+      const bottomLeft = 0;
+      const bottomRight = uW;
+      const topLeft = (uW - topBase) / 2;
+      const topRight = topLeft + topBase;
+      vertices = [[bottomLeft, uH], [bottomRight, uH], [topRight, 0], [topLeft, 0]];
     }
 
+    // ---------- obwiednia ----------
+    let minUX = Infinity, maxUX = -Infinity, minUY = Infinity, maxUY = -Infinity;
+    for (const [ux, uy] of vertices) {
+      if (ux < minUX) minUX = ux;
+      if (ux > maxUX) maxUX = ux;
+      if (uy < minUY) minUY = uy;
+      if (uy > maxUY) maxUY = uy;
+    }
+
+    const totalW = (maxUX - minUX) * UNIT + 2 * PADDING;
+    const totalH = (maxUY - minUY) * UNIT + 2 * PADDING;
+    svg.setAttribute('viewBox', `0 0 ${totalW} ${totalH}`);
+    svg.setAttribute('width', totalW * zoom);
+    svg.setAttribute('height', totalH * zoom);
+
+    // funkcja przeliczająca współrzędne jednostkowe na piksele SVG
+    function toScreen(ux, uy) {
+      return {
+        x: PADDING + (ux - minUX) * UNIT,
+        y: PADDING + (uy - minUY) * UNIT
+      };
+    }
+
+    let s = '';
+
+    // ---------- siatka ----------
+    if (gridCheckbox.checked) {
+      const cols = Math.ceil(maxUX - minUX);
+      const rows = Math.ceil(maxUY - minUY);
+      for (let i = 0; i <= cols; i++) {
+        const x = PADDING + i * UNIT;
+        s += `<line x1="${x}" y1="${PADDING}" x2="${x}" y2="${PADDING + rows * UNIT}" stroke="${gs}" stroke-width="0.5"/>`;
+      }
+      for (let j = 0; j <= rows; j++) {
+        const y = PADDING + j * UNIT;
+        s += `<line x1="${PADDING}" y1="${y}" x2="${PADDING + cols * UNIT}" y2="${y}" stroke="${gs}" stroke-width="0.5"/>`;
+      }
+    }
+
+    // ---------- rysowanie figury ----------
+    // wypełnienie
+    let ptsStr = vertices.map(([ux, uy]) => {
+      const p = toScreen(ux, uy);
+      return `${p.x},${p.y}`;
+    }).join(' ');
+    s += `<polygon points="${ptsStr}" fill="${fill}" stroke="${ss}" stroke-width="2"/>`;
+
+    // dla prostokąta dodatkowo kratkowane wypełnienie (małe kwadraciki)
     if (shape === 'rectangle') {
-      s+=`<rect x="${ox}" y="${oy}" width="${width*UNIT}" height="${height*UNIT}" fill="none" stroke="${ss}" stroke-width="2"/>`;
-      for(let y=0;y<rows;y++) for(let x=0;x<cols;x++){
-        const vw=Math.max(0, Math.min(1, width-x)), vh=Math.max(0, Math.min(1, height-y));
-        if(vw>0 && vh>0) s+=`<rect x="${ox+x*UNIT}" y="${oy+y*UNIT}" width="${vw*UNIT}" height="${vh*UNIT}" fill="${fill}"/>`;
-      }
-    } else if (shape === 'rightTriangle' || shape === 'equilateral' || shape === 'triangle') {
-      let pts;
-      if (shape === 'rightTriangle') {
-        pts = `${ox},${oy} ${ox},${oy+height*UNIT} ${ox+width*UNIT},${oy+height*UNIT}`;
-      } else { // równoboczny i równoramienny mają wierzchołek na górze na środku
-        const apexX = ox + width*UNIT/2;
-        pts = `${apexX},${oy} ${ox},${oy+height*UNIT} ${ox+width*UNIT},${oy+height*UNIT}`;
-      }
-      s+=`<polygon points="${pts}" fill="${fill}" stroke="${ss}" stroke-width="2"/>`;
-    } else if (shape === 'parallelogram' || shape === 'rhombus') {
-      // Równoległobok i romb: podstawa width, wysokość height; górna krawędź przesunięta o offset
-      let offset;
-      if (shape === 'rhombus') {
-        // bok = width, wysokość = height, aby zachować równość boków: offset = sqrt(width^2 - height^2) (o ile height <= width)
-        const sideLen = width;
-        if (height >= sideLen) {
-          // gdy wysokość >= bok, romb jest niemożliwy, więc rysujemy jako pionową kreskę? lepiej narysujmy coś bezpiecznego
-          offset = 0;
-        } else {
-          offset = Math.sqrt(sideLen*sideLen - height*height);
+      const cols = Math.ceil(uW);
+      const rows = Math.ceil(uH);
+      const base = toScreen(0, 0);
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          const vw = Math.max(0, Math.min(1, uW - x));
+          const vh = Math.max(0, Math.min(1, uH - y));
+          if (vw > 0 && vh > 0) {
+            const rx = base.x + x * UNIT;
+            const ry = base.y + y * UNIT;
+            s += `<rect x="${rx}" y="${ry}" width="${vw * UNIT}" height="${vh * UNIT}" fill="${fill}"/>`;
+          }
         }
-      } else {
-        // dla równoległoboku stałe przesunięcie, np. 0.3 * width
-        offset = width * 0.3;
       }
-      const pts = `${ox},${oy+height*UNIT} ${ox+width*UNIT},${oy+height*UNIT} ${ox+width*UNIT+offset*UNIT},${oy} ${ox+offset*UNIT},${oy}`;
-      s+=`<polygon points="${pts}" fill="${fill}" stroke="${ss}" stroke-width="2"/>`;
-    } else if (shape === 'trapezoid') {
-      // Podstawy: width (dolna), base2Val (górna). Obie wyśrodkowane.
-      const bottomBase = width;
-      const topBase = base2Val;
-      const bottomLeftX = ox;
-      const bottomRightX = ox + bottomBase*UNIT;
-      const topLeftX = ox + (bottomBase - topBase)/2 * UNIT;
-      const topRightX = topLeftX + topBase*UNIT;
-      const pts = `${bottomLeftX},${oy+height*UNIT} ${bottomRightX},${oy+height*UNIT} ${topRightX},${oy} ${topLeftX},${oy}`;
-      s+=`<polygon points="${pts}" fill="${fill}" stroke="${ss}" stroke-width="2"/>`;
+      // obrys prostokąta (już narysowany jako polygon, ale dla pewności można dodać)
+      // jest już narysowany, więc nie dublujemy
     }
 
     svg.innerHTML = s;
   }
 
+  // ---------- obsługa interfejsu ----------
   function updateUIForShape() {
     const shape = shapeSelect.value;
-    // Default visibility
     heightGroup.style.display = '';
     base2Group.style.display = 'none';
     widthLabel.textContent = 'Długość';
@@ -245,13 +282,16 @@
       widthLabel.textContent = 'Bok';
     } else if (shape === 'rectangle') {
       widthLabel.textContent = 'Długość';
-      heightLabel.textContent = 'Szerokość';  // opcjonalnie: dla prostokąta "Szerokość"
+      heightLabel.textContent = 'Szerokość';
     } else if (shape === 'rightTriangle' || shape === 'triangle') {
       widthLabel.textContent = 'Podstawa';
       heightLabel.textContent = 'Wysokość';
     } else if (shape === 'parallelogram' || shape === 'rhombus') {
-      if (shape === 'rhombus') widthLabel.textContent = 'Bok';
-      else widthLabel.textContent = 'Podstawa';
+      if (shape === 'rhombus') {
+        widthLabel.textContent = 'Bok';
+      } else {
+        widthLabel.textContent = 'Podstawa';
+      }
       heightLabel.textContent = 'Wysokość';
     } else if (shape === 'trapezoid') {
       widthLabel.textContent = 'Podstawa 1';
@@ -260,15 +300,21 @@
     }
   }
 
-  // Synchronizacja suwaków i pól tekstowych dla nowego inputa b2
+  // synchronizacja pól i suwaków
+  w.oninput = draw;
+  h.oninput = draw;
   b2.oninput = draw;
+  ws.oninput = () => { w.value = ws.value; draw(); };
+  hs.oninput = () => { h.value = hs.value; draw(); };
   b2s.oninput = () => { b2.value = b2s.value; draw(); };
-  b2.addEventListener('change', () => {
-    const v = num(b2.value);
-    b2.value = v;
-    b2s.value = v;
-    draw();
-  });
+  colorPicker.oninput = draw;
+  gridCheckbox.addEventListener('change', draw);
+  window.addEventListener('themechange', draw);
+
+  // poprawne wprowadzanie z klawiatury (Enter, utrata focus)
+  w.addEventListener('change', () => { const v = num(w.value); w.value = v; ws.value = v; draw(); });
+  h.addEventListener('change', () => { const v = num(h.value); h.value = v; hs.value = v; draw(); });
+  b2.addEventListener('change', () => { const v = num(b2.value); b2.value = v; b2s.value = v; draw(); });
 
   shapeSelect.addEventListener('change', () => {
     updateUIForShape();
@@ -279,20 +325,7 @@
     e.preventDefault();
     zoom = Math.max(0.5, Math.min(4, zoom + (e.deltaY > 0 ? -0.1 : 0.1)));
     draw();
-  }, {passive: false});
-
-  w.oninput = draw;
-  h.oninput = draw;
-  ws.oninput = () => { w.value = ws.value; draw(); };
-  hs.oninput = () => { h.value = hs.value; draw(); };
-  colorPicker.oninput = draw;
-  gridCheckbox.addEventListener('change', draw);
-  window.addEventListener('themechange', draw);
-
-  // Dodatkowe listenery na zmianę ręczną pól (enter lub utrata focus)
-  w.addEventListener('change', () => { const v=num(w.value); w.value=v; ws.value=v; draw(); });
-  h.addEventListener('change', () => { const v=num(h.value); h.value=v; hs.value=v; draw(); });
-  b2.addEventListener('change', () => { const v=num(b2.value); b2.value=v; b2s.value=v; draw(); });
+  }, { passive: false });
 
   updateUIForShape();
   draw();
