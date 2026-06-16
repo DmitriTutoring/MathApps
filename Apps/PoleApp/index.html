@@ -273,42 +273,30 @@
   // ── View state ──
   let viewW = 0, viewH = 0;      // natural SVG size (viewBox)
   let zoom = 1;                  // current zoom level (1 = fit exactly)
-  let focusX = 0, focusY = 0;    // world point (in viewBox coords) we want to keep fixed, initially center
   let panX = 0, panY = 0;        // offset of SVG from container center (in screen pixels)
 
-  // Re-apply the SVG element's size and position
+  const MIN_ZOOM = 0.5;
+  const MAX_ZOOM = 5.0;
+
   function updateSVGPosition() {
     if (!viewW || !viewH) return;
     const cW = svgContainer.clientWidth;
     const cH = svgContainer.clientHeight;
     if (cW <= 0 || cH <= 0) return;
 
-    // maximum zoom to fit exactly (without clipping)
-    const maxZoom = Math.min(cW / viewW, cH / viewH);
-    zoom = Math.max(0.5, Math.min(maxZoom, zoom));   // clamp to allowed range
+    // Clamp zoom to allowed range
+    zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
 
-    // SVG pixel size
     const wPx = viewW * zoom;
     const hPx = viewH * zoom;
     svg.setAttribute('width', wPx);
     svg.setAttribute('height', hPx);
 
-    // Desired position: we want the point (focusX, focusY) in world coordinates
-    // to appear at the same screen position as before (the mouse position when wheel fired).
-    // Here we just center the SVG and then shift by panX, panY.
-    // panX, panY will be updated by the wheel event to keep the focus point steady.
     svg.style.left = `calc(50% + ${panX}px)`;
     svg.style.top = `calc(50% + ${panY}px)`;
     svg.style.transform = 'translate(-50%, -50%)';
   }
 
-  // Set initial pan to center the shape
-  function resetPan() {
-    panX = 0;
-    panY = 0;
-  }
-
-  // Wheel zoom toward cursor
   svgContainer.addEventListener('wheel', (e) => {
     e.preventDefault();
     if (!viewW || !viewH) return;
@@ -321,34 +309,22 @@
     const cH = svgContainer.clientHeight;
     if (cW <= 0 || cH <= 0) return;
 
-    // Current SVG pixel size and position
     const curW = viewW * zoom;
     const curH = viewH * zoom;
 
-    // The SVG is centered with top/left 50% and translated -50%,
-    // then shifted by panX, panY.
-    // The top-left corner of the SVG in container coordinates is:
     const svgLeft = (cW - curW) / 2 + panX;
     const svgTop = (cH - curH) / 2 + panY;
 
-    // World coordinates under mouse
     const worldX = ((mouseScreenX - svgLeft) / curW) * viewW;
     const worldY = ((mouseScreenY - svgTop) / curH) * viewH;
 
-    // Change zoom
     let newZoom = zoom + (e.deltaY > 0 ? -0.1 : 0.1);
-    const maxZoom = Math.min(cW / viewW, cH / viewH);
-    newZoom = Math.max(0.5, Math.min(maxZoom, newZoom));
-    if (newZoom === zoom) return;   // nothing changed
+    newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+    if (newZoom === zoom) return;
 
-    // New SVG pixel size
     const newW = viewW * newZoom;
     const newH = viewH * newZoom;
 
-    // Compute new pan so that (worldX, worldY) stays under mouse
-    // We want: mouseScreenX = svgLeft_new + (worldX / viewW) * newW
-    // where svgLeft_new = (cW - newW)/2 + panX_new
-    // So panX_new = mouseScreenX - (cW - newW)/2 - (worldX / viewW) * newW
     const newPanX = mouseScreenX - (cW - newW) / 2 - (worldX / viewW) * newW;
     const newPanY = mouseScreenY - (cH - newH) / 2 - (worldY / viewH) * newH;
 
@@ -358,11 +334,10 @@
     updateSVGPosition();
   }, { passive: false });
 
-  // Keep zoom within bounds when container resizes
   new ResizeObserver(() => {
     if (viewW && viewH) {
-      const maxZoom = Math.min(svgContainer.clientWidth / viewW, svgContainer.clientHeight / viewH);
-      if (zoom > maxZoom) zoom = maxZoom;
+      // Keep zoom within bounds after resize
+      zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
       updateSVGPosition();
     }
   }).observe(svgContainer);
@@ -416,7 +391,7 @@
     areaVal.textContent = fmt(area);
     katex.render(latexString, areaFormula, { throwOnError: false });
 
-    // vertices (same as before)
+    // vertices
     let vertices = [];
     const uW = width, uH = height;
     if (shape === 'rectangle') {
@@ -501,12 +476,11 @@
 
     svg.innerHTML = s;
 
-    // Reset view to fully fit
+    // Reset view to fit and center
     const cW = svgContainer.clientWidth;
     const cH = svgContainer.clientHeight;
     if (cW > 0 && cH > 0 && viewW > 0 && viewH > 0) {
-      zoom = Math.min(cW / viewW, cH / viewH);
-      // start with shape centered
+      zoom = Math.min(cW / viewW, cH / viewH); // start at fit
       panX = 0; panY = 0;
       updateSVGPosition();
     }
