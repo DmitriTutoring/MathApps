@@ -29,11 +29,11 @@
     }
     .area-formula .katex { font-size: inherit; }
     .svg-container {
-      flex: 1; min-height: 0; width: 100%; position: relative;
-      overflow: hidden;                     /* no scrollbars */
-      touch-action: manipulation;           /* disable browser gestures */
-      cursor: crosshair;
-    }
+  flex: 1; min-height: 0; width: 100%; position: relative;
+  overflow: hidden;
+  touch-action: manipulation;
+  cursor: default;   /* normal arrow, or just delete the cursor line entirely */
+}
     svg {
       position: absolute;
       top: 50%; left: 50%;
