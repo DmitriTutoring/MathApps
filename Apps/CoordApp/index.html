@@ -61,21 +61,24 @@
     const container = document.getElementById('canvasContainer');
     const resetBtn = document.getElementById('resetBtn');
 
-    const defaultView = { x: -5, y: -5, w: 10, h: 10 };
+    // ── View state ──
+    // We store the mathematical Y axis (positive up).
+    // topY = largest Y visible (top of screen)
+    // rangeY = visible height
+    const defaultView = { x: -5, topY: 5, w: 10, rangeY: 10 };
     let view = { ...defaultView };
 
     function applyView() {
-      svg.setAttribute('viewBox', `${view.x} ${view.y} ${view.w} ${view.h}`);
+      // SVG viewBox uses screen Y (positive down)
+      const svgY = view.topY - view.rangeY;   // minimum Y (bottom of screen)
+      svg.setAttribute('viewBox', `${view.x} ${svgY} ${view.w} ${view.rangeY}`);
       drawContents();
     }
 
-    // ── Nicely formatted numbers ──
+    // ── Number formatting ──
     function formatNumber(n) {
-      // avoid long floating point strings
       if (Number.isInteger(n)) return n.toString();
-      // round to 10 decimal places then trim trailing zeros
       const fixed = n.toFixed(10);
-      // remove trailing zeros and possible trailing dot
       return fixed.replace(/\.?0+$/, '');
     }
 
@@ -92,32 +95,18 @@
       const containerH = container.clientHeight;
       if (containerW <= 0 || containerH <= 0) return;
 
-      // SVG units per screen pixel
-      const pixelToSVG = view.w / containerW;
-
-      // Constant screen sizes
+      const pixelToSVG = view.w / containerW;   // X direction (same for Y because uniform scale)
       const AXIS_PX = 4;
       const MAJOR_GRID_PX = 1.2;
       const MINOR_GRID_PX = 0.6;
-      const LABEL_FONT_PX = 16;   // always at least 16px tall
+      const LABEL_FONT_PX = 20;
 
       const axisWidthSVG = AXIS_PX * pixelToSVG;
       const majorGridWidthSVG = MAJOR_GRID_PX * pixelToSVG;
       const minorGridWidthSVG = MINOR_GRID_PX * pixelToSVG;
       const labelFontSizeSVG = LABEL_FONT_PX * pixelToSVG;
 
-      svg.innerHTML = '';
-
-      // Background
-      const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      bgRect.setAttribute('x', view.x);
-      bgRect.setAttribute('y', view.y);
-      bgRect.setAttribute('width', view.w);
-      bgRect.setAttribute('height', view.h);
-      bgRect.setAttribute('fill', bg);
-      svg.appendChild(bgRect);
-
-      // Nice step for grid lines
+      // compute step
       const range = view.w;
       const targetTicks = 10;
       let rawStep = range / targetTicks;
@@ -129,63 +118,67 @@
       else if (residual < 7.5) step = 5 * magnitude;
       else step = 10 * magnitude;
 
-      // Limit total lines to avoid performance issues
       const maxLines = 120;
-      let linesCount = (view.w / step) + (view.h / step);
-      while (linesCount > maxLines) {
-        step *= 2;
-        linesCount = (view.w / step) + (view.h / step);
-      }
+      let linesCount = (view.w / step) + (view.rangeY / step);
+      while (linesCount > maxLines) { step *= 2; linesCount = (view.w / step) + (view.rangeY / step); }
 
       const minorStep = step / 5;
       const drawMinor = (minorStep / pixelToSVG) >= 20 && linesCount < 80;
 
+      // helper
       function createLine(x1, y1, x2, y2, color, width) {
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', x1);
-        line.setAttribute('y1', y1);
-        line.setAttribute('x2', x2);
-        line.setAttribute('y2', y2);
-        line.setAttribute('stroke', color);
-        line.setAttribute('stroke-width', width);
+        line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+        line.setAttribute('stroke', color); line.setAttribute('stroke-width', width);
         svg.appendChild(line);
       }
 
-      // Vertical lines
+      // clear
+      svg.innerHTML = '';
+      // background
+      const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      bgRect.setAttribute('x', view.x);
+      bgRect.setAttribute('y', view.topY - view.rangeY);
+      bgRect.setAttribute('width', view.w);
+      bgRect.setAttribute('height', view.rangeY);
+      bgRect.setAttribute('fill', bg);
+      svg.appendChild(bgRect);
+
+      // vertical grid lines
       const startX = Math.ceil(view.x / step) * step;
       for (let x = startX; x <= view.x + view.w; x += step) {
-        createLine(x, view.y, x, view.y + view.h, majorGridColor, majorGridWidthSVG);
+        createLine(x, view.topY - view.rangeY, x, view.topY, majorGridColor, majorGridWidthSVG);
       }
       if (drawMinor) {
         const minorStartX = Math.ceil(view.x / minorStep) * minorStep;
         for (let x = minorStartX; x <= view.x + view.w; x += minorStep) {
           if (Math.abs(x % step) < 0.001) continue;
-          createLine(x, view.y, x, view.y + view.h, minorGridColor, minorGridWidthSVG);
+          createLine(x, view.topY - view.rangeY, x, view.topY, minorGridColor, minorGridWidthSVG);
         }
       }
 
-      // Horizontal lines
-      const startY = Math.ceil(view.y / step) * step;
-      for (let y = startY; y <= view.y + view.h; y += step) {
+      // horizontal grid lines
+      const startY = Math.ceil((view.topY - view.rangeY) / step) * step;
+      for (let y = startY; y <= view.topY; y += step) {
         createLine(view.x, y, view.x + view.w, y, majorGridColor, majorGridWidthSVG);
       }
       if (drawMinor) {
-        const minorStartY = Math.ceil(view.y / minorStep) * minorStep;
-        for (let y = minorStartY; y <= view.y + view.h; y += minorStep) {
+        const minorStartY = Math.ceil((view.topY - view.rangeY) / minorStep) * minorStep;
+        for (let y = minorStartY; y <= view.topY; y += minorStep) {
           if (Math.abs(y % step) < 0.001) continue;
           createLine(view.x, y, view.x + view.w, y, minorGridColor, minorGridWidthSVG);
         }
       }
 
-      // Axes
+      // axes (always through origin)
       createLine(view.x, 0, view.x + view.w, 0, axisColor, axisWidthSVG);
-      createLine(0, view.y, 0, view.y + view.h, axisColor, axisWidthSVG);
+      createLine(0, view.topY - view.rangeY, 0, view.topY, axisColor, axisWidthSVG);
 
-      // Labels
+      // labels
       function addText(x, y, text, anchor = 'middle') {
         const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        txt.setAttribute('x', x);
-        txt.setAttribute('y', y);
+        txt.setAttribute('x', x); txt.setAttribute('y', y);
         txt.setAttribute('font-size', labelFontSizeSVG);
         txt.setAttribute('font-family', 'Inter, sans-serif');
         txt.setAttribute('fill', labelColor);
@@ -194,11 +187,10 @@
         svg.appendChild(txt);
       }
 
-      // Limit labels per axis
       const maxLabelsPerAxis = 12;
-      const xCount = (view.w / step);
+      const xCount = view.w / step;
       const actualLabelStepX = (xCount > maxLabelsPerAxis) ? step * 2 : step;
-      const yCount = (view.h / step);
+      const yCount = view.rangeY / step;
       const actualLabelStepY = (yCount > maxLabelsPerAxis) ? step * 2 : step;
 
       // X‑axis labels
@@ -208,18 +200,18 @@
         addText(x, labelFontSizeSVG * 1.2, formatNumber(x), 'middle');
       }
 
-      // Y‑axis labels
-      const labelStartY = Math.ceil(view.y / actualLabelStepY) * actualLabelStepY;
-      for (let y = labelStartY; y <= view.y + view.h; y += actualLabelStepY) {
+      // Y‑axis labels (Y positive up – we place them on the left of the axis)
+      const labelStartY = Math.ceil((view.topY - view.rangeY) / actualLabelStepY) * actualLabelStepY;
+      for (let y = labelStartY; y <= view.topY; y += actualLabelStepY) {
         if (Math.abs(y) < 0.001) continue;
-        addText(labelFontSizeSVG * 0.6, y + labelFontSizeSVG * 0.4, formatNumber(y), 'end');
+        addText(-labelFontSizeSVG * 0.6, y + labelFontSizeSVG * 0.3, formatNumber(y), 'end');
       }
 
-      // Origin
+      // origin
       addText(labelFontSizeSVG * 0.6, -labelFontSizeSVG * 0.4, '0', 'end');
     }
 
-    // ── Panning ──
+    // ── Panning (Y positive up) ──
     let isPanning = false;
     let lastMouseX, lastMouseY;
 
@@ -236,21 +228,20 @@
       const dy = e.clientY - lastMouseY;
       lastMouseX = e.clientX;
       lastMouseY = e.clientY;
+
       const scaleX = view.w / container.clientWidth;
-      const scaleY = view.h / container.clientHeight;
+      const scaleY = view.rangeY / container.clientHeight;
+
       view.x -= dx * scaleX;
-      view.y -= dy * scaleY;
+      view.topY += dy * scaleY;   // moving mouse up (dy negative) increases topY -> Y positive up
       applyView();
     });
 
     window.addEventListener('mouseup', () => {
-      if (isPanning) {
-        isPanning = false;
-        container.style.cursor = 'default';
-      }
+      if (isPanning) { isPanning = false; container.style.cursor = 'default'; }
     });
 
-    // Touch pan
+    // touch pan
     container.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
         isPanning = true;
@@ -267,9 +258,9 @@
       lastMouseX = e.touches[0].clientX;
       lastMouseY = e.touches[0].clientY;
       const scaleX = view.w / container.clientWidth;
-      const scaleY = view.h / container.clientHeight;
+      const scaleY = view.rangeY / container.clientHeight;
       view.x -= dx * scaleX;
-      view.y -= dy * scaleY;
+      view.topY += dy * scaleY;
       applyView();
     }, { passive: false });
 
@@ -278,28 +269,32 @@
       container.style.cursor = 'default';
     });
 
-    // ── Zoom ──
+    // ── Zoom (cursor‑centered, Y positive up) ──
     container.addEventListener('wheel', (e) => {
       e.preventDefault();
       const rect = container.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
+
+      // world coords (X normal, Y positive up)
       const worldX = view.x + (mouseX / container.clientWidth) * view.w;
-      const worldY = view.y + (mouseY / container.clientHeight) * view.h;
+      const worldY = view.topY - (mouseY / container.clientHeight) * view.rangeY;
+
       const zoomFactor = 1.1;
       let newW, newH;
       if (e.deltaY < 0) {
         newW = view.w / zoomFactor;
-        newH = view.h / zoomFactor;
+        newH = view.rangeY / zoomFactor;
       } else {
         newW = view.w * zoomFactor;
-        newH = view.h * zoomFactor;
+        newH = view.rangeY * zoomFactor;
       }
       if (newW < 0.01 || newW > 10000 || newH < 0.01 || newH > 10000) return;
+
       view.x = worldX - (mouseX / container.clientWidth) * newW;
-      view.y = worldY - (mouseY / container.clientHeight) * newH;
+      view.topY = worldY + (mouseY / container.clientHeight) * newH;
       view.w = newW;
-      view.h = newH;
+      view.rangeY = newH;
       applyView();
     }, { passive: false });
 
@@ -309,11 +304,8 @@
       applyView();
     });
 
-    // ── Theme / resize ──
     window.addEventListener('themechange', drawContents);
     new ResizeObserver(() => drawContents()).observe(container);
-
-    // Initial draw
     applyView();
   </script>
 </body>
