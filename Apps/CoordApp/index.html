@@ -69,7 +69,17 @@
       drawContents();
     }
 
-    // ── Drawing with perfectly constant screen sizes ──
+    // ── Nicely formatted numbers ──
+    function formatNumber(n) {
+      // avoid long floating point strings
+      if (Number.isInteger(n)) return n.toString();
+      // round to 10 decimal places then trim trailing zeros
+      const fixed = n.toFixed(10);
+      // remove trailing zeros and possible trailing dot
+      return fixed.replace(/\.?0+$/, '');
+    }
+
+    // ── Drawing ──
     function drawContents() {
       const dark = document.documentElement.hasAttribute('data-theme');
       const bg = dark ? '#1c1b18' : '#f5f0e8';
@@ -82,14 +92,14 @@
       const containerH = container.clientHeight;
       if (containerW <= 0 || containerH <= 0) return;
 
-      // Conversion factor: SVG units per screen pixel
+      // SVG units per screen pixel
       const pixelToSVG = view.w / containerW;
 
-      // Desired screen-pixel sizes (constant regardless of zoom)
-      const AXIS_PX = 3.5;
+      // Constant screen sizes
+      const AXIS_PX = 4;
       const MAJOR_GRID_PX = 1.2;
       const MINOR_GRID_PX = 0.6;
-      const LABEL_FONT_PX = 14;
+      const LABEL_FONT_PX = 16;   // always at least 16px tall
 
       const axisWidthSVG = AXIS_PX * pixelToSVG;
       const majorGridWidthSVG = MAJOR_GRID_PX * pixelToSVG;
@@ -107,7 +117,7 @@
       bgRect.setAttribute('fill', bg);
       svg.appendChild(bgRect);
 
-      // Nice step for grid
+      // Nice step for grid lines
       const range = view.w;
       const targetTicks = 10;
       let rawStep = range / targetTicks;
@@ -119,7 +129,7 @@
       else if (residual < 7.5) step = 5 * magnitude;
       else step = 10 * magnitude;
 
-      // Limit total lines to avoid clutter
+      // Limit total lines to avoid performance issues
       const maxLines = 120;
       let linesCount = (view.w / step) + (view.h / step);
       while (linesCount > maxLines) {
@@ -128,7 +138,6 @@
       }
 
       const minorStep = step / 5;
-      // Show minor lines only if they’re at least 20 screen pixels apart
       const drawMinor = (minorStep / pixelToSVG) >= 20 && linesCount < 80;
 
       function createLine(x1, y1, x2, y2, color, width) {
@@ -185,7 +194,7 @@
         svg.appendChild(txt);
       }
 
-      // Limit labels to avoid overlap (max 12 per axis)
+      // Limit labels per axis
       const maxLabelsPerAxis = 12;
       const xCount = (view.w / step);
       const actualLabelStepX = (xCount > maxLabelsPerAxis) ? step * 2 : step;
@@ -196,21 +205,21 @@
       const labelStartX = Math.ceil(view.x / actualLabelStepX) * actualLabelStepX;
       for (let x = labelStartX; x <= view.x + view.w; x += actualLabelStepX) {
         if (Math.abs(x) < 0.001) continue;
-        addText(x, labelFontSizeSVG * 1.2, x.toString(), 'middle');
+        addText(x, labelFontSizeSVG * 1.2, formatNumber(x), 'middle');
       }
 
       // Y‑axis labels
       const labelStartY = Math.ceil(view.y / actualLabelStepY) * actualLabelStepY;
       for (let y = labelStartY; y <= view.y + view.h; y += actualLabelStepY) {
         if (Math.abs(y) < 0.001) continue;
-        addText(labelFontSizeSVG * 0.6, y + labelFontSizeSVG * 0.4, y.toString(), 'end');
+        addText(labelFontSizeSVG * 0.6, y + labelFontSizeSVG * 0.4, formatNumber(y), 'end');
       }
 
       // Origin
       addText(labelFontSizeSVG * 0.6, -labelFontSizeSVG * 0.4, '0', 'end');
     }
 
-    // ── Panning (mouse & touch) ──
+    // ── Panning ──
     let isPanning = false;
     let lastMouseX, lastMouseY;
 
@@ -241,6 +250,7 @@
       }
     });
 
+    // Touch pan
     container.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
         isPanning = true;
@@ -268,7 +278,7 @@
       container.style.cursor = 'default';
     });
 
-    // ── Zoom (wheel, cursor‑centered) ──
+    // ── Zoom ──
     container.addEventListener('wheel', (e) => {
       e.preventDefault();
       const rect = container.getBoundingClientRect();
