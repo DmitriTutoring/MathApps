@@ -69,7 +69,7 @@
       drawContents();
     }
 
-    // ── Drawing with screen‑consistent line widths ──
+    // ── Drawing with perfectly constant screen sizes ──
     function drawContents() {
       const dark = document.documentElement.hasAttribute('data-theme');
       const bg = dark ? '#1c1b18' : '#f5f0e8';
@@ -82,13 +82,19 @@
       const containerH = container.clientHeight;
       if (containerW <= 0 || containerH <= 0) return;
 
-      // Factor to convert screen pixels to SVG viewBox units
+      // Conversion factor: SVG units per screen pixel
       const pixelToSVG = view.w / containerW;
-      // Target sizes in screen pixels (approximate)
-      const axisWidthSVG = 2.5 * pixelToSVG;
-      const majorGridWidthSVG = 1.2 * pixelToSVG;
-      const minorGridWidthSVG = 0.6 * pixelToSVG;
-      const labelFontSizeSVG = Math.max(1, 14 * pixelToSVG); // minimum 1 SVG unit
+
+      // Desired screen-pixel sizes (constant regardless of zoom)
+      const AXIS_PX = 3.5;
+      const MAJOR_GRID_PX = 1.2;
+      const MINOR_GRID_PX = 0.6;
+      const LABEL_FONT_PX = 14;
+
+      const axisWidthSVG = AXIS_PX * pixelToSVG;
+      const majorGridWidthSVG = MAJOR_GRID_PX * pixelToSVG;
+      const minorGridWidthSVG = MINOR_GRID_PX * pixelToSVG;
+      const labelFontSizeSVG = LABEL_FONT_PX * pixelToSVG;
 
       svg.innerHTML = '';
 
@@ -101,7 +107,7 @@
       bgRect.setAttribute('fill', bg);
       svg.appendChild(bgRect);
 
-      // Determine nice step for grid lines
+      // Nice step for grid
       const range = view.w;
       const targetTicks = 10;
       let rawStep = range / targetTicks;
@@ -113,7 +119,7 @@
       else if (residual < 7.5) step = 5 * magnitude;
       else step = 10 * magnitude;
 
-      // Limit step so we never draw more than ~100 lines total (vertical+horizontal)
+      // Limit total lines to avoid clutter
       const maxLines = 120;
       let linesCount = (view.w / step) + (view.h / step);
       while (linesCount > maxLines) {
@@ -122,7 +128,7 @@
       }
 
       const minorStep = step / 5;
-      // Draw minor lines only if they are at least 20 screen pixels apart
+      // Show minor lines only if they’re at least 20 screen pixels apart
       const drawMinor = (minorStep / pixelToSVG) >= 20 && linesCount < 80;
 
       function createLine(x1, y1, x2, y2, color, width) {
@@ -179,33 +185,32 @@
         svg.appendChild(txt);
       }
 
-      // Limit labels to ~10 per axis
-      const labelStep = step; // only at major positions
+      // Limit labels to avoid overlap (max 12 per axis)
       const maxLabelsPerAxis = 12;
-      const xCount = (view.w / labelStep);
-      const yCount = (view.h / labelStep);
+      const xCount = (view.w / step);
       const actualLabelStepX = (xCount > maxLabelsPerAxis) ? step * 2 : step;
+      const yCount = (view.h / step);
       const actualLabelStepY = (yCount > maxLabelsPerAxis) ? step * 2 : step;
 
-      // X-axis labels
+      // X‑axis labels
       const labelStartX = Math.ceil(view.x / actualLabelStepX) * actualLabelStepX;
       for (let x = labelStartX; x <= view.x + view.w; x += actualLabelStepX) {
         if (Math.abs(x) < 0.001) continue;
-        addText(x, 0 + labelFontSizeSVG * 1.2, x.toString(), 'middle');
+        addText(x, labelFontSizeSVG * 1.2, x.toString(), 'middle');
       }
 
-      // Y-axis labels
+      // Y‑axis labels
       const labelStartY = Math.ceil(view.y / actualLabelStepY) * actualLabelStepY;
       for (let y = labelStartY; y <= view.y + view.h; y += actualLabelStepY) {
         if (Math.abs(y) < 0.001) continue;
-        addText(0 + labelFontSizeSVG * 0.6, y + labelFontSizeSVG * 0.4, y.toString(), 'end');
+        addText(labelFontSizeSVG * 0.6, y + labelFontSizeSVG * 0.4, y.toString(), 'end');
       }
 
-      // Origin label
-      addText(0 + labelFontSizeSVG * 0.6, 0 - labelFontSizeSVG * 0.4, '0', 'end');
+      // Origin
+      addText(labelFontSizeSVG * 0.6, -labelFontSizeSVG * 0.4, '0', 'end');
     }
 
-    // ── Panning ──
+    // ── Panning (mouse & touch) ──
     let isPanning = false;
     let lastMouseX, lastMouseY;
 
@@ -222,7 +227,6 @@
       const dy = e.clientY - lastMouseY;
       lastMouseX = e.clientX;
       lastMouseY = e.clientY;
-
       const scaleX = view.w / container.clientWidth;
       const scaleY = view.h / container.clientHeight;
       view.x -= dx * scaleX;
@@ -237,7 +241,6 @@
       }
     });
 
-    // Touch pan
     container.addEventListener('touchstart', (e) => {
       if (e.touches.length === 1) {
         isPanning = true;
@@ -265,16 +268,14 @@
       container.style.cursor = 'default';
     });
 
-    // ── Zoom (cursor‑centered) ──
+    // ── Zoom (wheel, cursor‑centered) ──
     container.addEventListener('wheel', (e) => {
       e.preventDefault();
       const rect = container.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
-
       const worldX = view.x + (mouseX / container.clientWidth) * view.w;
       const worldY = view.y + (mouseY / container.clientHeight) * view.h;
-
       const zoomFactor = 1.1;
       let newW, newH;
       if (e.deltaY < 0) {
@@ -285,12 +286,8 @@
         newH = view.h * zoomFactor;
       }
       if (newW < 0.01 || newW > 10000 || newH < 0.01 || newH > 10000) return;
-
-      const newX = worldX - (mouseX / container.clientWidth) * newW;
-      const newY = worldY - (mouseY / container.clientHeight) * newH;
-
-      view.x = newX;
-      view.y = newY;
+      view.x = worldX - (mouseX / container.clientWidth) * newW;
+      view.y = worldY - (mouseY / container.clientHeight) * newH;
       view.w = newW;
       view.h = newH;
       applyView();
@@ -302,15 +299,11 @@
       applyView();
     });
 
-    // ── Theme change ──
+    // ── Theme / resize ──
     window.addEventListener('themechange', drawContents);
+    new ResizeObserver(() => drawContents()).observe(container);
 
-    // ── Resize ──
-    new ResizeObserver(() => {
-      drawContents();
-    }).observe(container);
-
-    // ── Initial draw ──
+    // Initial draw
     applyView();
   </script>
 </body>
