@@ -61,14 +61,18 @@
     const container = document.getElementById('canvasContainer');
     const resetBtn = document.getElementById('resetBtn');
 
-    // view: topY is the mathematical Y at the top of the screen (largest Y)
-    const defaultView = { x: -5, topY: 5, w: 10, rangeY: 10 };
-    let view = { ...defaultView };
+    function getDefaultView() {
+      const w = 20;
+      const aspect = container.clientHeight / container.clientWidth;
+      const rangeY = w * (aspect > 0 ? aspect : 1);
+      return { x: -w / 2, topY: rangeY / 2, w, rangeY };
+    }
+
+    let view = getDefaultView();
 
     function applyView() {
-      // SVG viewBox: x, svgY (lowest Y), w, rangeY
       const svgY = view.topY - view.rangeY;
-      svg.setAttribute('viewBox', `${view.x} ${svgY} ${view.w} ${view.rangeY}`);
+      svg.setAttribute('viewBox', `${view.x} ${-view.topY} ${view.w} ${view.rangeY}`);
       drawContents();
     }
 
@@ -78,7 +82,6 @@
       return fixed.replace(/\.?0+$/, '');
     }
 
-    // SVG uses downward-positive Y; this helper converts mathematical Y to SVG Y.
     function svgY(y) {
       return -y;
     }
@@ -99,14 +102,13 @@
       const AXIS_PX = 4;
       const MAJOR_GRID_PX = 1.2;
       const MINOR_GRID_PX = 0.6;
-      const LABEL_FONT_PX = 24;   // larger, always readable
+      const LABEL_FONT_PX = 24;
 
       const axisWidthSVG = AXIS_PX * pixelToSVG;
       const majorGridWidthSVG = MAJOR_GRID_PX * pixelToSVG;
       const minorGridWidthSVG = MINOR_GRID_PX * pixelToSVG;
       const labelFontSizeSVG = LABEL_FONT_PX * pixelToSVG;
 
-      // nice step
       const range = view.w;
       const targetTicks = 10;
       let rawStep = range / targetTicks;
@@ -136,7 +138,7 @@
       svg.innerHTML = '';
       const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
       bgRect.setAttribute('x', view.x);
-      bgRect.setAttribute('y', view.topY - view.rangeY);
+      bgRect.setAttribute('y', svgY(view.topY));
       bgRect.setAttribute('width', view.w);
       bgRect.setAttribute('height', view.rangeY);
       bgRect.setAttribute('fill', bg);
@@ -145,13 +147,13 @@
       // vertical grid
       const startX = Math.ceil(view.x / step) * step;
       for (let x = startX; x <= view.x + view.w; x += step) {
-        createLine(x, svgY(view.topY - view.rangeY), x, svgY(view.topY), majorGridColor, majorGridWidthSVG);
+        createLine(x, svgY(view.topY), x, svgY(view.topY - view.rangeY), majorGridColor, majorGridWidthSVG);
       }
       if (drawMinor) {
         const minorStartX = Math.ceil(view.x / minorStep) * minorStep;
         for (let x = minorStartX; x <= view.x + view.w; x += minorStep) {
           if (Math.abs(x % step) < 0.001) continue;
-          createLine(x, svgY(view.topY - view.rangeY), x, svgY(view.topY), minorGridColor, minorGridWidthSVG);
+          createLine(x, svgY(view.topY), x, svgY(view.topY - view.rangeY), minorGridColor, minorGridWidthSVG);
         }
       }
 
@@ -170,9 +172,8 @@
 
       // axes
       createLine(view.x, 0, view.x + view.w, 0, axisColor, axisWidthSVG);
-      createLine(0, svgY(view.topY - view.rangeY), 0, svgY(view.topY), axisColor, axisWidthSVG);
+      createLine(0, svgY(view.topY), 0, svgY(view.topY - view.rangeY), axisColor, axisWidthSVG);
 
-      // labels
       function addText(x, y, text, anchor = 'middle') {
         const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         txt.setAttribute('x', x); txt.setAttribute('y', y);
@@ -190,25 +191,22 @@
       const yCount = view.rangeY / step;
       const actualLabelStepY = (yCount > maxLabelsPerAxis) ? step * 2 : step;
 
-      // X-axis labels (positive right)
       const labelStartX = Math.ceil(view.x / actualLabelStepX) * actualLabelStepX;
       for (let x = labelStartX; x <= view.x + view.w; x += actualLabelStepX) {
         if (Math.abs(x) < 0.001) continue;
         addText(x, labelFontSizeSVG * 1.2, formatNumber(x), 'middle');
       }
 
-      // Y-axis labels (positive up)
       const labelStartY = Math.ceil((view.topY - view.rangeY) / actualLabelStepY) * actualLabelStepY;
       for (let y = labelStartY; y <= view.topY; y += actualLabelStepY) {
         if (Math.abs(y) < 0.001) continue;
         addText(-labelFontSizeSVG * 0.6, svgY(y) + labelFontSizeSVG * 0.3, formatNumber(y), 'end');
       }
 
-      // origin
       addText(labelFontSizeSVG * 0.6, -labelFontSizeSVG * 0.4, '0', 'end');
     }
 
-    // ── Panning (fixed direction) ──
+    // ── Panning ──
     let isPanning = false;
     let lastMouseX, lastMouseY;
 
@@ -229,8 +227,8 @@
       const scaleX = view.w / container.clientWidth;
       const scaleY = view.rangeY / container.clientHeight;
 
-      view.x -= dx * scaleX;          // drag right → decrease x (view moves right)
-      view.topY -= dy * scaleY;       // drag up (dy negative) → subtract negative → topY increases → view moves up
+      view.x -= dx * scaleX;
+      view.topY += dy * scaleY;   // FIX: was -= which inverted Y pan
       applyView();
     });
 
@@ -257,7 +255,7 @@
       const scaleX = view.w / container.clientWidth;
       const scaleY = view.rangeY / container.clientHeight;
       view.x -= dx * scaleX;
-      view.topY -= dy * scaleY;
+      view.topY += dy * scaleY;   // FIX: was -= which inverted Y pan
       applyView();
     }, { passive: false });
 
@@ -295,12 +293,16 @@
     }, { passive: false });
 
     resetBtn.addEventListener('click', () => {
-      view = { ...defaultView };
+      view = getDefaultView();
       applyView();
     });
 
     window.addEventListener('themechange', drawContents);
-    new ResizeObserver(() => drawContents()).observe(container);
+    new ResizeObserver(() => {
+      // On resize, if at default, recalculate to fill screen
+      view = getDefaultView();
+      applyView();
+    }).observe(container);
     applyView();
   </script>
 </body>
