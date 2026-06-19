@@ -78,6 +78,11 @@
       return fixed.replace(/\.?0+$/, '');
     }
 
+    // SVG uses downward-positive Y; this helper converts mathematical Y to SVG Y.
+    function svgY(y) {
+      return -y;
+    }
+
     function drawContents() {
       const dark = document.documentElement.hasAttribute('data-theme');
       const bg = dark ? '#1c1b18' : '#f5f0e8';
@@ -140,32 +145,32 @@
       // vertical grid
       const startX = Math.ceil(view.x / step) * step;
       for (let x = startX; x <= view.x + view.w; x += step) {
-        createLine(x, view.topY - view.rangeY, x, view.topY, majorGridColor, majorGridWidthSVG);
+        createLine(x, svgY(view.topY - view.rangeY), x, svgY(view.topY), majorGridColor, majorGridWidthSVG);
       }
       if (drawMinor) {
         const minorStartX = Math.ceil(view.x / minorStep) * minorStep;
         for (let x = minorStartX; x <= view.x + view.w; x += minorStep) {
           if (Math.abs(x % step) < 0.001) continue;
-          createLine(x, view.topY - view.rangeY, x, view.topY, minorGridColor, minorGridWidthSVG);
+          createLine(x, svgY(view.topY - view.rangeY), x, svgY(view.topY), minorGridColor, minorGridWidthSVG);
         }
       }
 
       // horizontal grid
       const startY = Math.ceil((view.topY - view.rangeY) / step) * step;
       for (let y = startY; y <= view.topY; y += step) {
-        createLine(view.x, y, view.x + view.w, y, majorGridColor, majorGridWidthSVG);
+        createLine(view.x, svgY(y), view.x + view.w, svgY(y), majorGridColor, majorGridWidthSVG);
       }
       if (drawMinor) {
         const minorStartY = Math.ceil((view.topY - view.rangeY) / minorStep) * minorStep;
         for (let y = minorStartY; y <= view.topY; y += minorStep) {
           if (Math.abs(y % step) < 0.001) continue;
-          createLine(view.x, y, view.x + view.w, y, minorGridColor, minorGridWidthSVG);
+          createLine(view.x, svgY(y), view.x + view.w, svgY(y), minorGridColor, minorGridWidthSVG);
         }
       }
 
       // axes
       createLine(view.x, 0, view.x + view.w, 0, axisColor, axisWidthSVG);
-      createLine(0, view.topY - view.rangeY, 0, view.topY, axisColor, axisWidthSVG);
+      createLine(0, svgY(view.topY - view.rangeY), 0, svgY(view.topY), axisColor, axisWidthSVG);
 
       // labels
       function addText(x, y, text, anchor = 'middle') {
@@ -196,7 +201,7 @@
       const labelStartY = Math.ceil((view.topY - view.rangeY) / actualLabelStepY) * actualLabelStepY;
       for (let y = labelStartY; y <= view.topY; y += actualLabelStepY) {
         if (Math.abs(y) < 0.001) continue;
-        addText(-labelFontSizeSVG * 0.6, y + labelFontSizeSVG * 0.3, formatNumber(y), 'end');
+        addText(-labelFontSizeSVG * 0.6, svgY(y) + labelFontSizeSVG * 0.3, formatNumber(y), 'end');
       }
 
       // origin
