@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Waga równań</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c4601e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='9' x2='9' y1='4' y2='20'/><path d='M4 7c0-1.7 1.3-3 3-3h13'/><path d='M18 20c-1.7 0-3-1.3-3-3V4'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Lora:wght@600;700&display=swap" rel="stylesheet">
+  <script>
+    if (localStorage.getItem('theme') !== 'light') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  </script>
+  <style>
+    /* ── Light mode (default) ── */
+    :root {
+      --bg: #f5f0e8;
+      --card: #ffffff;
+      --card2: #ebe5d9;
+      --border: #d4cdc0;
+      --text: #2c2816;
+      --muted: #7a7060;
+      --accent: #c4601e;
+      --metal: #8a7a65;
+      --metal-dark: #5a4e3d;
+      --weight: #7a6a55;
+      --weight-border: #5a4e3d;
+      --xweight: #c4601e;
+      --xweight-border: #8a3e0e;
+      --danger: #b03020;
+    }
+
+    /* ── Dark mode ── */
+    [data-theme="dark"] {
+      --bg: #171612;
+      --card: #24221d;
+      --card2: #2d2a24;
+      --border: #403b33;
+      --text: #f1eadc;
+      --muted: #a79d8b;
+      --accent: #d08a34;
+      --metal: #aaa08d;
+      --metal-dark: #756d60;
+      --weight: #8d7b62;
+      --weight-border: #6f614e;
+      --xweight: #d48925;
+      --xweight-border: #9f6518;
+      --danger: #dc6a5f;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100dvh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      width: 100%;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px clamp(14px, 4vw, 24px);
+      background: var(--card); border-bottom: 1px solid var(--border);
+      flex-shrink: 0; min-height: 56px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .topbar-title {
+      font-family: 'Lora', Georgia, serif;
+      font-size: clamp(15px, 4vw, 18px); font-weight: 700; color: var(--text);
+    }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+    .theme-btn {
+      background: none; border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 8px; cursor: pointer; color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px; flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .theme-btn:hover { background: var(--card2); }
+    .theme-btn svg { width: 18px; height: 18px; }
+
+    .back-btn {
+      font-size: 14px; font-weight: 600; color: var(--muted);
+      text-decoration: none; padding: 8px 14px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      background: var(--card2); white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .back-btn:hover { color: var(--text); }
+    .back-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    /* ── App layout ── */
+    .app {
+      width: min(960px, 100%);
+      padding: 24px 16px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .equation {
+      min-height: 48px;
+      font-size: clamp(30px, 7vw, 52px);
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.1;
+    }
+
+    .answer {
+      min-height: 44px;
+      font-size: clamp(28px, 6vw, 44px);
+      font-weight: 900;
+      color: var(--accent);
+      text-align: center;
+    }
+
+    .pin-box {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 10px 14px;
+      color: var(--text); font-weight: 800;
+      cursor: pointer; user-select: none;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .pin-box input {
+      width: 18px; height: 18px;
+      accent-color: var(--accent); cursor: pointer;
+    }
+    .pin-value { color: var(--accent); font-weight: 900; }
+
+    /* ── Scale ── */
+    .scale-wrap {
+      position: relative;
+      width: min(760px, 100%);
+      height: 350px;
+      margin-top: 4px;
+      overflow: visible;
+    }
+
+    .stand {
+      position: absolute; left: 50%; top: 92px;
+      width: 24px; height: 210px;
+      transform: translateX(-50%);
+      background: var(--metal); border: 3px solid var(--metal-dark);
+      border-radius: 8px 8px 4px 4px; z-index: 2;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .stand::after {
+      content: "";
+      position: absolute; left: 50%; bottom: -28px;
+      width: 140px; height: 34px;
+      transform: translateX(-50%);
+      border-radius: 8px 8px 4px 4px;
+      background: var(--metal); border: 3px solid var(--metal-dark);
+    }
+
+    .base {
+      position: absolute; left: 50%; top: 326px;
+      width: 230px; height: 34px;
+      transform: translateX(-50%);
+      background: var(--metal); border: 3px solid var(--metal-dark);
+      clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%);
+      z-index: 1;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .pivot {
+      position: absolute; left: 50%; top: 112px;
+      width: 34px; height: 34px;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      background: var(--metal); border: 3px solid var(--metal-dark);
+      z-index: 8;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .beam {
+      position: absolute; left: 50%; top: 112px;
+      width: 500px; height: 14px;
+      margin-left: -250px; margin-top: -7px;
+      border-radius: 999px;
+      background: var(--metal); border: 3px solid var(--metal-dark);
+      transform-origin: 50% 50%;
+      transition:
+        transform 0.55s cubic-bezier(.22,.61,.36,1),
+        background 0.2s, border-color 0.2s;
+      z-index: 5;
+    }
+
+    .pan {
+      position: absolute;
+      width: 230px; height: 135px;
+      transform: translate(-50%, 0);
+      transition:
+        left 0.55s cubic-bezier(.22,.61,.36,1),
+        top 0.55s cubic-bezier(.22,.61,.36,1);
+      z-index: 6;
+    }
+
+    .hanger-dot {
+      position: absolute; left: 50%; top: -8px;
+      width: 14px; height: 14px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: var(--bg); border: 3px solid var(--metal);
+      z-index: 4;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .hanger-line {
+      position: absolute; top: 4px; left: 50%;
+      width: 3px; background: var(--metal);
+      transform-origin: top center; border-radius: 999px; z-index: 2;
+      transition: background 0.2s;
+    }
+    .hanger-line.left, .hanger-line.right { height: 102px; }
+    .hanger-line.middle { height: 88px; }
+    .hanger-line.left   { transform: rotate(27deg); }
+    .hanger-line.middle { transform: rotate(0deg); }
+    .hanger-line.right  { transform: rotate(-27deg); }
+
+    .pan-bowl {
+      position: absolute; left: 50%; top: 88px;
+      width: 210px; height: 8px;
+      transform: translateX(-50%);
+      background: var(--metal); border: 2px solid var(--metal-dark);
+      border-radius: 999px; overflow: visible; z-index: 3;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .pan-top { display: none; }
+
+    .weight-display {
+      position: absolute; left: 50%; top: 30px;
+      transform: translateX(-50%);
+      display: flex; gap: 10px;
+      justify-content: center; align-items: flex-end;
+      z-index: 5; min-width: 170px; min-height: 58px;
+    }
+
+    .visual-weight {
+      width: 78px; height: 48px;
+      border-radius: 8px 8px 5px 5px;
+      background: var(--weight); border: 3px solid var(--weight-border);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 21px; font-weight: 900;
+      position: relative;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .visual-weight::before {
+      content: "";
+      position: absolute; width: 28px; height: 16px;
+      top: -16px; left: 50%; transform: translateX(-50%);
+      border: 5px solid var(--weight-border);
+      border-bottom: none; border-radius: 16px 16px 0 0;
+      background: transparent;
+      transition: border-color 0.2s;
+    }
+    .visual-weight.x { background: var(--xweight); border-color: var(--xweight-border); }
+    .visual-weight.x::before { border-color: var(--xweight-border); }
+
+    .pan-total {
+      position: absolute; left: 50%; top: 108px;
+      transform: translateX(-50%);
+      font-weight: 900; font-size: 20px; color: var(--text);
+    }
+
+    /* ── Controls ── */
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(240px, 1fr));
+      gap: 16px;
+      width: min(640px, 100%);
+    }
+
+    .side-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-top: 3px solid var(--accent);
+      border-radius: 18px; padding: 16px;
+      display: flex; flex-direction: column; gap: 12px; align-items: center;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .side-card h2 {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 17px; color: var(--text);
+    }
+
+    .chips {
+      min-height: 44px;
+      display: flex; flex-wrap: wrap; gap: 7px;
+      justify-content: center; align-content: center;
+    }
+
+    .chip {
+      border: none; border-radius: 9px; padding: 7px 11px;
+      font-weight: 900; font-size: 16px; color: white;
+      background: var(--weight); cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .chip.x { background: var(--xweight); }
+
+    .buttons {
+      display: flex; flex-wrap: wrap; gap: 7px; justify-content: center;
+    }
+
+    .btn {
+      min-width: 42px;
+      border: 1px solid var(--border); border-radius: 10px;
+      background: var(--card2); color: var(--text);
+      padding: 8px 11px; font-size: 16px; font-weight: 800;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .btn:hover { border-color: var(--accent); }
+
+    .clear {
+      border: none; background: transparent;
+      color: var(--muted); cursor: pointer; font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      transition: color 0.15s;
+    }
+    .clear:hover { color: var(--text); }
+
+    .small-status {
+      color: var(--muted); font-size: 14px;
+      text-align: center; min-height: 20px;
+    }
+    .danger { color: var(--danger); }
+
+    /* ── Mobile ── */
+    @media (max-width: 680px) {
+      .app { padding: 16px 10px 26px; }
+      .scale-wrap { height: 300px; }
+      .stand  { top: 82px; height: 170px; }
+      .base   { top: 276px; }
+      .pivot  { top: 102px; }
+      .beam   { top: 102px; width: 360px; margin-left: -180px; }
+      .pan    { width: 170px; height: 112px; }
+      .hanger-line.left, .hanger-line.right { height: 78px; }
+      .hanger-line.middle { height: 68px; }
+      .pan-bowl { top: 68px; width: 160px; height: 7px; }
+      .weight-display { top: 25px; }
+      .visual-weight { width: 56px; height: 38px; font-size: 16px; }
+      .visual-weight::before {
+        width: 20px; height: 11px; top: -13px;
+        border-width: 4px; border-bottom: none;
+      }
+      .pan-total { top: 88px; font-size: 16px; }
+      .controls { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <span class="topbar-title">Waga równań</span>
+    <div class="topbar-right">
+      <button class="theme-btn" id="themeToggle" title="Tryb ciemny / jasny"></button>
+      <a href="../index.html" class="back-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>
+        Powrót
+      </a>
+    </div>
+  </div>
+
+  <main class="app">
+    <div class="equation" id="equation">0 = 0</div>
+
+    <section class="scale-wrap" id="scaleWrap">
+      <div class="stand"></div>
+      <div class="base"></div>
+      <div class="beam" id="beam"></div>
+      <div class="pivot"></div>
+
+      <div class="pan" id="leftPan">
+        <div class="hanger-dot"></div>
+        <div class="hanger-line left"></div>
+        <div class="hanger-line middle"></div>
+        <div class="hanger-line right"></div>
+        <div class="weight-display" id="leftVisualWeights"></div>
+        <div class="pan-top"></div>
+        <div class="pan-bowl"></div>
+        <div class="pan-total" id="leftTotal">0</div>
+      </div>
+
+      <div class="pan" id="rightPan">
+        <div class="hanger-dot"></div>
+        <div class="hanger-line left"></div>
+        <div class="hanger-line middle"></div>
+        <div class="hanger-line right"></div>
+        <div class="weight-display" id="rightVisualWeights"></div>
+        <div class="pan-top"></div>
+        <div class="pan-bowl"></div>
+        <div class="pan-total" id="rightTotal">0</div>
+      </div>
+    </section>
+
+    <div class="answer" id="answer">Dodaj odważniki</div>
+
+    <label class="pin-box">
+      <input type="checkbox" id="pinX" />
+      Przypnij x
+      <span class="pin-value" id="pinValue"></span>
+    </label>
+
+    <div class="small-status" id="status"></div>
+
+    <section class="controls">
+      <div class="side-card">
+        <h2>Lewa strona</h2>
+        <div class="chips" id="leftChips"></div>
+        <div class="buttons">
+          <button class="btn" data-side="left" data-type="number" data-value="1">1</button>
+          <button class="btn" data-side="left" data-type="number" data-value="2">2</button>
+          <button class="btn" data-side="left" data-type="number" data-value="5">5</button>
+          <button class="btn" data-side="left" data-type="number" data-value="10">10</button>
+          <button class="btn" data-side="left" data-type="x">x</button>
+        </div>
+        <button class="clear" data-clear="left">Wyczyść</button>
+      </div>
+
+      <div class="side-card">
+        <h2>Prawa strona</h2>
+        <div class="chips" id="rightChips"></div>
+        <div class="buttons">
+          <button class="btn" data-side="right" data-type="number" data-value="1">1</button>
+          <button class="btn" data-side="right" data-type="number" data-value="2">2</button>
+          <button class="btn" data-side="right" data-type="number" data-value="5">5</button>
+          <button class="btn" data-side="right" data-type="number" data-value="10">10</button>
+          <button class="btn" data-side="right" data-type="x">x</button>
+        </div>
+        <button class="clear" data-clear="right">Wyczyść</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="../../shared/theme.js"></script>
+  <script>
+    const state = { left: [], right: [], nextId: 1, pinnedX: null };
+
+    const els = {
+      scaleWrap:          document.getElementById("scaleWrap"),
+      beam:               document.getElementById("beam"),
+      leftPan:            document.getElementById("leftPan"),
+      rightPan:           document.getElementById("rightPan"),
+      equation:           document.getElementById("equation"),
+      answer:             document.getElementById("answer"),
+      status:             document.getElementById("status"),
+      pinX:               document.getElementById("pinX"),
+      pinValue:           document.getElementById("pinValue"),
+      leftTotal:          document.getElementById("leftTotal"),
+      rightTotal:         document.getElementById("rightTotal"),
+      leftChips:          document.getElementById("leftChips"),
+      rightChips:         document.getElementById("rightChips"),
+      leftVisualWeights:  document.getElementById("leftVisualWeights"),
+      rightVisualWeights: document.getElementById("rightVisualWeights"),
+    };
+
+    function addWeight(side, type, value = null) {
+      state[side].push({ id: state.nextId++, type, value });
+      update();
+    }
+    function removeWeight(side, id) {
+      state[side] = state[side].filter(w => w.id !== id);
+      update();
+    }
+    function clearSide(side) { state[side] = []; update(); }
+
+    function sumSide(side) {
+      let num = 0, x = 0;
+      for (const w of state[side]) w.type === "number" ? num += w.value : x++;
+      return { num, x };
+    }
+    function totals() { return { left: sumSide("left"), right: sumSide("right") }; }
+
+    function fmt(n) {
+      if (!Number.isFinite(n)) return "";
+      return Number(n).toFixed(2).replace(/\.?0+$/, "");
+    }
+
+    function sideText(side) {
+      const parts = [];
+      if (side.x > 0) parts.push(side.x === 1 ? "x" : `${side.x}x`);
+      if (side.num > 0 || parts.length === 0) parts.push(fmt(side.num));
+      return parts.join(" + ");
+    }
+
+    function solve(t) {
+      const coeff = t.left.x - t.right.x;
+      const constant = t.right.num - t.left.num;
+      if (coeff === 0) return constant === 0 ? { type: "infinite" } : { type: "none" };
+      const x = constant / coeff;
+      return x <= 0 ? { type: "bad", x } : { type: "single", x };
+    }
+
+    function displayTotals(t, solution) {
+      if (state.pinnedX !== null) {
+        return {
+          left:  t.left.num  + t.left.x  * state.pinnedX,
+          right: t.right.num + t.right.x * state.pinnedX
+        };
+      }
+      const hasX = t.left.x > 0 || t.right.x > 0;
+      if (!hasX) return { left: t.left.num, right: t.right.num };
+      if (solution.type === "single") {
+        return {
+          left:  t.left.num  + t.left.x  * solution.x,
+          right: t.right.num + t.right.x * solution.x
+        };
+      }
+      return { left: t.left.num, right: t.right.num };
+    }
+
+    function layoutScale(display) {
+      const rect = els.scaleWrap.getBoundingClientRect();
+      const cx   = rect.width / 2;
+      const isMobile = rect.width <= 680;
+      const cy   = isMobile ? 102 : 112;
+      const arm  = isMobile ? 180 : 250;
+
+      const diff  = display.left - display.right;
+      const angle = Math.max(-13, Math.min(13, -diff * 0.8));
+      const rad   = angle * Math.PI / 180;
+
+      els.beam.style.left      = `${cx}px`;
+      els.beam.style.top       = `${cy}px`;
+      els.beam.style.transform = `rotate(${angle}deg)`;
+
+      const leftJoint  = { x: cx - arm * Math.cos(rad), y: cy - arm * Math.sin(rad) };
+      const rightJoint = { x: cx + arm * Math.cos(rad), y: cy + arm * Math.sin(rad) };
+
+      els.leftPan.style.left  = `${leftJoint.x}px`;
+      els.leftPan.style.top   = `${leftJoint.y}px`;
+      els.rightPan.style.left = `${rightJoint.x}px`;
+      els.rightPan.style.top  = `${rightJoint.y}px`;
+    }
+
+    function renderChips(side) {
+      const container = side === "left" ? els.leftChips : els.rightChips;
+      container.innerHTML = "";
+      for (const w of state[side]) {
+        const chip = document.createElement("button");
+        chip.className = `chip ${w.type === "x" ? "x" : ""}`;
+        chip.textContent = w.type === "x" ? "x" : fmt(w.value);
+        chip.title = "Kliknij, aby usunąć";
+        chip.addEventListener("click", () => removeWeight(side, w.id));
+        container.appendChild(chip);
+      }
+    }
+
+    function renderVisualWeights(side, t) {
+      const container = side === "left" ? els.leftVisualWeights : els.rightVisualWeights;
+      const data = side === "left" ? t.left : t.right;
+      container.innerHTML = "";
+      if (data.num > 0) {
+        const el = document.createElement("div");
+        el.className = "visual-weight";
+        el.textContent = fmt(data.num);
+        container.appendChild(el);
+      }
+      if (data.x > 0) {
+        const el = document.createElement("div");
+        el.className = "visual-weight x";
+        el.textContent = state.pinnedX !== null
+          ? (data.x === 1 ? `x=${fmt(state.pinnedX)}` : `${data.x}x`)
+          : (data.x === 1 ? "x" : `${data.x}x`);
+        container.appendChild(el);
+      }
+    }
+
+    function updatePinDisplay() {
+      els.pinX.checked = state.pinnedX !== null;
+      els.pinValue.textContent = state.pinnedX !== null ? `= ${fmt(state.pinnedX)}` : "";
+    }
+
+    function updateText(t, solution, display) {
+      els.equation.textContent = `${sideText(t.left)} = ${sideText(t.right)}`;
+      els.leftTotal.textContent  = fmt(display.left);
+      els.rightTotal.textContent = fmt(display.right);
+      els.status.classList.remove("danger");
+
+      if (state.left.length === 0 && state.right.length === 0) {
+        els.answer.textContent = "Dodaj odważniki";
+        els.status.textContent = "";
+        return;
+      }
+      if (state.pinnedX !== null) {
+        const diff = display.left - display.right;
+        els.answer.textContent = `x = ${fmt(state.pinnedX)}`;
+        els.status.textContent = diff === 0
+          ? "x jest przypięte. Waga jest w równowadze."
+          : diff > 0
+            ? `x jest przypięte. Lewa strona cięższa o ${fmt(diff)}.`
+            : `x jest przypięte. Prawa strona cięższa o ${fmt(-diff)}.`;
+        return;
+      }
+      if (t.left.x === 0 && t.right.x === 0) {
+        const diff = display.left - display.right;
+        els.answer.textContent = diff === 0 ? "Równowaga" : diff > 0 ? "Lewa cięższa" : "Prawa cięższa";
+        els.status.textContent = diff !== 0 ? `Różnica: ${fmt(Math.abs(diff))}` : "";
+        return;
+      }
+      if (solution.type === "single") { els.answer.textContent = `x = ${fmt(solution.x)}`; els.status.textContent = ""; return; }
+      if (solution.type === "infinite") { els.answer.textContent = "∞ rozwiązań"; els.status.textContent = "Każda dodatnia wartość x pasuje."; return; }
+      if (solution.type === "none") { els.answer.textContent = "Brak rozwiązania"; els.status.textContent = "x występuje tak samo po obu stronach."; els.status.classList.add("danger"); return; }
+      if (solution.type === "bad") {
+        els.answer.textContent = Math.abs(solution.x) < 1e-9 ? "x = 0" : "Ujemne x";
+        els.status.textContent = Math.abs(solution.x) < 1e-9
+          ? "Zero nie jest dozwolone w tej wersji."
+          : `Wyszłoby x = ${fmt(solution.x)}, ale ujemne x jest zakazane.`;
+        els.status.classList.add("danger");
+      }
+    }
+
+    function update() {
+      const t        = totals();
+      const solution = solve(t);
+      const display  = displayTotals(t, solution);
+      updatePinDisplay();
+      updateText(t, solution, display);
+      renderChips("left");
+      renderChips("right");
+      renderVisualWeights("left", t);
+      renderVisualWeights("right", t);
+      layoutScale(display);
+    }
+
+    document.querySelectorAll("[data-side]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        btn.dataset.type === "x"
+          ? addWeight(btn.dataset.side, "x")
+          : addWeight(btn.dataset.side, "number", Number(btn.dataset.value));
+      });
+    });
+    document.querySelectorAll("[data-clear]").forEach(btn => {
+      btn.addEventListener("click", () => clearSide(btn.dataset.clear));
+    });
+
+    els.pinX.addEventListener("change", () => {
+      if (!els.pinX.checked) { state.pinnedX = null; update(); return; }
+      const solution = solve(totals());
+      if (solution.type === "single") { state.pinnedX = solution.x; update(); return; }
+      state.pinnedX = null;
+      els.pinX.checked = false;
+      update();
+      els.status.textContent = "Nie można przypiąć x, bo teraz nie ma jednej dodatniej wartości x.";
+      els.status.classList.add("danger");
+    });
+
+    window.addEventListener("resize", update);
+    update();
+  </script>
+</body>
+</html>
