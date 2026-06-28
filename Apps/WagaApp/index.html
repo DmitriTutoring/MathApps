@@ -51,11 +51,11 @@
 
     .app {
       width: min(960px, 100%);
-      padding: 24px 16px 32px;
+      padding: 14px 16px 24px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 18px;
+      gap: 10px;
       align-self: center;
     }
 
@@ -64,21 +64,22 @@
     }
 
     .equation {
-      min-height: 48px;
-      font-size: clamp(30px, 7vw, 52px);
+      min-height: 40px;
+      font-size: clamp(28px, 6vw, 46px);
       font-family: Georgia, "Times New Roman", serif;
       font-weight: 700;
       text-align: center;
-      line-height: 1.1;
+      line-height: 1.05;
       color: var(--text);
     }
 
     .answer {
-      min-height: 44px;
-      font-size: clamp(28px, 6vw, 44px);
+      min-height: 38px;
+      font-size: clamp(26px, 5.5vw, 40px);
       font-weight: 900;
       color: var(--icon);
       text-align: center;
+      line-height: 1.05;
     }
 
     .pin-box {
@@ -88,7 +89,7 @@
       background: var(--bg-card);
       border: 1.5px solid var(--border);
       border-radius: 14px;
-      padding: 10px 14px;
+      padding: 8px 13px;
       color: var(--text);
       font-weight: 800;
       cursor: pointer;
@@ -116,8 +117,8 @@
     .scale-wrap {
       position: relative;
       width: min(760px, 100%);
-      height: 430px;
-      margin-top: 4px;
+      height: 380px;
+      margin-top: 0;
       overflow: visible;
     }
 
@@ -126,7 +127,7 @@
       left: 50%;
       top: 92px;
       width: 24px;
-      height: 290px;
+      height: 240px;
       transform: translateX(-50%);
       background: var(--scale-metal);
       border: 3px solid var(--scale-metal-dark);
@@ -151,7 +152,7 @@
     .base {
       position: absolute;
       left: 50%;
-      top: 405px;
+      top: 355px;
       width: 230px;
       height: 34px;
       transform: translateX(-50%);
@@ -198,7 +199,7 @@
     .pan {
       position: absolute;
       width: 230px;
-      height: 175px;
+      height: 155px;
       transform: translate(-50%, 0);
       transition:
         left 0.55s cubic-bezier(.22,.61,.36,1),
@@ -234,11 +235,11 @@
 
     .hanger-line.left,
     .hanger-line.right {
-      height: 136px;
+      height: 122px;
     }
 
     .hanger-line.middle {
-      height: 118px;
+      height: 106px;
     }
 
     .hanger-line.left {
@@ -256,7 +257,7 @@
     .pan-bowl {
       position: absolute;
       left: 50%;
-      top: 122px;
+      top: 108px;
       width: 210px;
       height: 8px;
       transform: translateX(-50%);
@@ -275,7 +276,7 @@
     .weight-display {
       position: absolute;
       left: 50%;
-      top: 64px;
+      top: 50px;
       transform: translateX(-50%);
       display: flex;
       gap: 10px;
@@ -329,7 +330,7 @@
     .pan-total {
       position: absolute;
       left: 50%;
-      top: 142px;
+      top: 128px;
       transform: translateX(-50%);
       font-weight: 900;
       font-size: 20px;
@@ -339,7 +340,7 @@
     .controls {
       display: grid;
       grid-template-columns: repeat(2, minmax(240px, 1fr));
-      gap: 16px;
+      gap: 14px;
       width: min(640px, 100%);
     }
 
@@ -348,10 +349,10 @@
       border: 1.5px solid var(--border);
       border-top: 3px solid var(--icon);
       border-radius: 18px;
-      padding: 16px;
+      padding: 13px 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       align-items: center;
       box-shadow: var(--shadow);
       transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
@@ -364,7 +365,7 @@
     }
 
     .chips {
-      min-height: 44px;
+      min-height: 38px;
       display: flex;
       flex-wrap: wrap;
       gap: 7px;
@@ -375,9 +376,9 @@
     .chip {
       border: none;
       border-radius: 9px;
-      padding: 7px 11px;
+      padding: 6px 10px;
       font-weight: 900;
-      font-size: 16px;
+      font-size: 15px;
       color: white;
       background: var(--scale-weight);
       cursor: pointer;
@@ -401,7 +402,7 @@
       border-radius: 10px;
       background: var(--input-bg);
       color: var(--text);
-      padding: 8px 11px;
+      padding: 7px 10px;
       font-size: 16px;
       font-weight: 800;
       cursor: pointer;
@@ -432,7 +433,8 @@
       color: var(--text-sub);
       font-size: 14px;
       text-align: center;
-      min-height: 20px;
+      min-height: 18px;
+      line-height: 1.2;
     }
 
     .danger {
@@ -441,20 +443,31 @@
 
     @media (max-width: 680px) {
       .app {
-        padding: 16px 10px 26px;
+        padding: 10px 10px 20px;
+        gap: 8px;
+      }
+
+      .equation {
+        min-height: 34px;
+        font-size: clamp(26px, 7vw, 38px);
+      }
+
+      .answer {
+        min-height: 32px;
+        font-size: clamp(24px, 6vw, 34px);
       }
 
       .scale-wrap {
-        height: 350px;
+        height: 310px;
       }
 
       .stand {
         top: 82px;
-        height: 230px;
+        height: 190px;
       }
 
       .base {
-        top: 326px;
+        top: 286px;
       }
 
       .pivot {
@@ -469,26 +482,26 @@
 
       .pan {
         width: 170px;
-        height: 145px;
+        height: 128px;
       }
 
       .hanger-line.left,
       .hanger-line.right {
-        height: 102px;
+        height: 90px;
       }
 
       .hanger-line.middle {
-        height: 88px;
+        height: 78px;
       }
 
       .pan-bowl {
-        top: 92px;
+        top: 80px;
         width: 160px;
         height: 7px;
       }
 
       .weight-display {
-        top: 49px;
+        top: 37px;
       }
 
       .visual-weight {
@@ -506,12 +519,17 @@
       }
 
       .pan-total {
-        top: 115px;
+        top: 102px;
         font-size: 16px;
       }
 
       .controls {
         grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .side-card {
+        padding: 12px 14px;
       }
     }
   </style>
