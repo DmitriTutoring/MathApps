@@ -43,25 +43,25 @@
     }
 
     body {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  }
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
 
-      .app {
-    width: min(960px, 100%);
-    padding: 24px 16px 32px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 18px;
-    align-self: center;
-  }
+    .app {
+      width: min(960px, 100%);
+      padding: 24px 16px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      align-self: center;
+    }
 
-  .topbar {
-  width: 100%;
-  }
+    .topbar {
+      width: 100%;
+    }
 
     .equation {
       min-height: 48px;
@@ -116,7 +116,7 @@
     .scale-wrap {
       position: relative;
       width: min(760px, 100%);
-      height: 350px;
+      height: 430px;
       margin-top: 4px;
       overflow: visible;
     }
@@ -126,7 +126,7 @@
       left: 50%;
       top: 92px;
       width: 24px;
-      height: 210px;
+      height: 290px;
       transform: translateX(-50%);
       background: var(--scale-metal);
       border: 3px solid var(--scale-metal-dark);
@@ -151,7 +151,7 @@
     .base {
       position: absolute;
       left: 50%;
-      top: 326px;
+      top: 405px;
       width: 230px;
       height: 34px;
       transform: translateX(-50%);
@@ -198,7 +198,7 @@
     .pan {
       position: absolute;
       width: 230px;
-      height: 135px;
+      height: 175px;
       transform: translate(-50%, 0);
       transition:
         left 0.55s cubic-bezier(.22,.61,.36,1),
@@ -234,11 +234,11 @@
 
     .hanger-line.left,
     .hanger-line.right {
-      height: 102px;
+      height: 136px;
     }
 
     .hanger-line.middle {
-      height: 88px;
+      height: 118px;
     }
 
     .hanger-line.left {
@@ -256,7 +256,7 @@
     .pan-bowl {
       position: absolute;
       left: 50%;
-      top: 88px;
+      top: 122px;
       width: 210px;
       height: 8px;
       transform: translateX(-50%);
@@ -275,7 +275,7 @@
     .weight-display {
       position: absolute;
       left: 50%;
-      top: 30px;
+      top: 64px;
       transform: translateX(-50%);
       display: flex;
       gap: 10px;
@@ -329,7 +329,7 @@
     .pan-total {
       position: absolute;
       left: 50%;
-      top: 108px;
+      top: 142px;
       transform: translateX(-50%);
       font-weight: 900;
       font-size: 20px;
@@ -445,16 +445,16 @@
       }
 
       .scale-wrap {
-        height: 300px;
+        height: 350px;
       }
 
       .stand {
         top: 82px;
-        height: 170px;
+        height: 230px;
       }
 
       .base {
-        top: 276px;
+        top: 326px;
       }
 
       .pivot {
@@ -469,26 +469,26 @@
 
       .pan {
         width: 170px;
-        height: 112px;
+        height: 145px;
       }
 
       .hanger-line.left,
       .hanger-line.right {
-        height: 78px;
+        height: 102px;
       }
 
       .hanger-line.middle {
-        height: 68px;
+        height: 88px;
       }
 
       .pan-bowl {
-        top: 68px;
+        top: 92px;
         width: 160px;
         height: 7px;
       }
 
       .weight-display {
-        top: 25px;
+        top: 49px;
       }
 
       .visual-weight {
@@ -506,7 +506,7 @@
       }
 
       .pan-total {
-        top: 88px;
+        top: 115px;
         font-size: 16px;
       }
 
@@ -747,7 +747,7 @@
       const arm = isMobile ? 180 : 250;
 
       const diff = display.left - display.right;
-      const angle = Math.max(-13, Math.min(13, -diff * 0.8));
+      const angle = Math.max(-18, Math.min(18, -diff * 1.0));
       const rad = angle * Math.PI / 180;
 
       els.beam.style.left = `${cx}px`;
